@@ -1,0 +1,2085 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Golden Claw: Sort · 玩法原型 v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#eceae4;font-family:"Microsoft YaHei","PingFang SC",sans-serif;color:#1f2937;overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none}
+body{display:flex;align-items:center;justify-content:center;gap:28px}
+#stage{position:relative;flex:none}
+#phone{position:absolute;left:0;top:0;width:430px;height:932px;transform-origin:0 0;border-radius:44px;overflow:hidden;background:#fbfaf8;box-shadow:0 0 0 10px #111827,0 18px 50px rgba(0,0,0,.25)}
+#cv{position:absolute;left:0;top:0;width:430px;height:932px;z-index:1;touch-action:none}
+.ui{position:absolute;z-index:3}
+.status{left:0;top:0;width:430px;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 36px;font:700 14px "IBM Plex Mono",Consolas,monospace}
+.notch{position:absolute;left:160px;top:12px;width:110px;height:30px;border-radius:15px;background:#111827}
+.pill{height:34px;border-radius:17px;background:#fff;border:1.4px solid #d1d5db;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px}
+#lvl{left:14px;top:58px;width:96px}
+#coinPill{left:118px;top:58px;width:102px;gap:10px}
+.coin{width:22px;height:22px;border-radius:50%;background:#f5c542;border:1.6px solid #c99a1a;font-size:11px;color:#7a5a00;display:flex;align-items:center;justify-content:center}
+#coins{font-family:"IBM Plex Mono",Consolas,monospace}
+#gear{left:228px;top:58px;width:34px;height:34px;border-radius:50%;background:#fff;border:1.4px solid #d1d5db;font-size:18px;color:#4b5563;display:flex;align-items:center;justify-content:center;cursor:pointer}
+#gear.mute{color:#cbd5e1;text-decoration:line-through}
+#rest{right:20px;top:66px;font-size:13px;font-weight:700;color:#6b7280}
+#vi{left:137px;top:116px;width:156px;height:26px;border-radius:13px;background:rgba(255,255,255,.94);border:1.4px solid #f9a8d4;display:flex;align-items:center;justify-content:space-around;padding:0 4px}
+#vi span{width:44px;height:20px;border-radius:10px;font-size:12px;font-weight:700;color:#9ca3af;display:flex;align-items:center;justify-content:center;transition:all .25s}
+#vi span.on{background:#db2777;color:#fff}
+.vb{width:46px;height:46px;border-radius:50%;background:rgba(255,255,255,.94);border:2px solid #db2777;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s}
+.vb:active{transform:scale(.92)}
+.vb svg{width:24px;height:24px;stroke:#db2777;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.vb.off{border-color:#d1d5db;cursor:default}.vb.off svg{stroke:#d1d5db}
+#vbL{left:14px;top:378px}#vbR{left:370px;top:378px}
+.vcap{width:60px;text-align:center;font-size:11px;font-weight:700;color:#9d174d;text-shadow:0 0 3px #fff,0 0 3px #fff;pointer-events:none}
+#vi,#rest{pointer-events:none}
+#vbLcap{left:7px;top:427px}#vbRcap{left:363px;top:427px}
+#toast{left:50%;top:166px;transform:translate(-50%,-6px);max-width:360px;padding:8px 16px;border-radius:18px;background:rgba(17,24,39,.86);color:#fff;font-size:13px;line-height:1.4;text-align:center;opacity:0;pointer-events:none;transition:all .2s}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#itembar{left:12px;top:846px;width:406px;height:76px;border-radius:18px;background:#f3f4f6;border:1.2px solid #e5e7eb}
+#itembar .t1{position:absolute;left:22px;top:22px;font-size:12px;color:#6b7280}
+#itembar .t2{position:absolute;left:22px;top:42px;font-size:12px;color:#9ca3af}
+#itemBtn{position:absolute;left:174px;top:9px;width:58px;height:58px;border-radius:50%;background:#fff;border:2.4px solid #c4b5fd;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#itemBtn svg{width:34px;height:34px;stroke:#7c3aed;fill:none;stroke-width:2.4;stroke-linecap:round}
+#itemBtn.off{border-color:#e5e7eb}#itemBtn.off svg{stroke:#cbd5e1}
+#itemCount{position:absolute;right:-6px;top:-6px;min-width:22px;height:22px;border-radius:11px;background:#ef4444;color:#fff;font:700 12px "IBM Plex Mono",Consolas,monospace;display:flex;align-items:center;justify-content:center;border:2px solid #fff}
+#itembar .t3{position:absolute;left:250px;top:29px;font-size:13px;font-weight:700;color:#6b7280}
+.home{left:150px;top:916px;width:130px;height:5px;border-radius:3px;background:#111827}
+.overlay{position:absolute;inset:0;z-index:5;background:rgba(16,34,55,.62);display:none;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.card{width:358px;border-radius:26px;background:#fffdf9;border:2px solid #c99a55;padding:26px 24px 22px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.2)}
+.card h1{font-size:24px;margin:4px 0 2px;color:#16283b}.card h2{font-size:14px;color:#a97630;font-weight:700;letter-spacing:1px}
+.card ul{text-align:left;margin:14px 0 16px;padding-left:2px;list-style:none}
+.card li{font-size:13px;line-height:1.55;margin:7px 0;padding-left:22px;position:relative;color:#374151}
+.card li b{color:#111827}
+.card li i{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;background:#1e3652;color:#fff;font:700 10px/16px sans-serif;font-style:normal;text-align:center}
+.btn{display:block;width:100%;height:52px;border-radius:15px;border:1.7px solid #aebccc;background:#fffdf9;color:#344b64;font:700 17px "Microsoft YaHei";cursor:pointer;margin-top:12px}
+.btn.primary{background:#1e3652;border-color:#1e3652;color:#fff}
+.m-icon{width:72px;height:72px;margin:-62px auto 8px;border-radius:50%;border:2.6px solid;display:flex;align-items:center;justify-content:center;font:800 34px sans-serif}
+.m-icon.ok{background:#fff7e6;border-color:#c99a55;color:#a97630}.m-icon.bad{background:#fff1ee;border-color:#aa5a52;color:#a2534a}
+.m-kicker{font-size:13px;font-weight:700;color:#596b7c;letter-spacing:1px}
+.m-title{font-size:30px;font-weight:800;color:#16283b;margin:4px 0}
+.m-title.failed{font-family:Georgia,serif;letter-spacing:4px;color:#9e554d;font-size:40px}
+.m-sub{font-size:13px;color:#526579}
+.m-stats{display:flex;justify-content:space-around;margin:16px 0 8px}
+.m-stats b{display:block;font:700 20px "IBM Plex Mono",Consolas,monospace;color:#16283b}.m-stats span{font-size:11px;color:#7b8793}
+.m-reward{margin:12px 0 4px;padding:12px;border-radius:16px;background:#fff8e9;border:1.5px solid #dbbe8c}
+.m-reward span{display:block;font-size:13px;font-weight:700;color:#76522b}.m-reward b{font:700 32px Georgia,serif;color:#9a6829}.m-reward small{display:block;font-size:11px;color:#7b8793}
+.m-reason{margin:14px 0 6px;padding:12px;border-radius:14px;background:#fbf4f1;border:1.5px solid #dab9b1;font-size:14px;color:#6d3330;line-height:1.5}
+.m-note{font-size:11px;color:#7b8793;margin-top:8px;line-height:1.5}
+#side{display:none;width:300px;max-height:92vh;overflow:auto;background:#fff;border-radius:16px;border:1px solid #e5e7eb;padding:20px 20px 16px;font-size:13px;line-height:1.6}
+body.wide #side{display:block}
+#side h3{font-size:16px;margin-bottom:2px}#side .ver{font-size:12px;color:#9ca3af;margin-bottom:10px}
+#side h4{font-size:13px;margin:14px 0 4px;color:#111827}
+#side p,#side li{color:#4b5563}#side ul{padding-left:16px}
+#live{font:12px/1.6 "IBM Plex Mono",Consolas,"Microsoft YaHei",monospace;background:#f3f4f6;border-radius:10px;padding:8px 10px;color:#374151;margin-top:8px}
+#side button{margin-top:8px;height:34px;padding:0 12px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;font:700 13px "Microsoft YaHei";cursor:pointer;margin-right:6px}
+.lg{display:flex;align-items:center;gap:8px;margin:4px 0}.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:6px;background:#fef3c7;color:#92400e;margin-left:4px}
+#grabLegend{left:16px;top:120px;font-size:10px;color:#93640c;display:flex;gap:5px;align-items:center;pointer-events:none}
+#grabLegend i{width:8px;height:8px;background:#edac08;border:1px solid #fff4bc;border-radius:50%;box-shadow:0 0 5px #ffc62f}
+#chainLegend{right:16px;top:120px;font:10px "Microsoft YaHei",sans-serif;color:#7b8793;pointer-events:none}
+#bonusPreview{height:38px;font-size:13px;margin-top:9px;border-color:#dec798;color:#936b2d}
+#side .coin-dot{border:2px solid #c99a1a;background:#ffd04d;color:#875409;font:700 9px/10px sans-serif;text-align:center}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="phone">
+    <canvas id="cv"></canvas>
+    <div class="ui status"><span>9:41</span><span>●● ▮</span></div>
+    <div class="notch ui"></div>
+    <div class="ui pill" id="lvl">S0 单关</div>
+    <div class="ui pill" id="coinPill"><span class="coin">金</span><span id="coins">120</span></div>
+    <div class="ui" id="gear" title="音效开关">⚙</div>
+    <div class="ui" id="rest">剩余 72 只</div>
+    <div class="ui" id="vi"><span id="vi-left">左侧</span><span id="vi-front" class="on">正面</span><span id="vi-right">右侧</span></div>
+    <div class="ui" id="grabLegend"><i></i>金色描边＝无遮挡</div>
+    <div class="ui" id="chainLegend">自动连抓 2×</div>
+    <div class="ui vb" id="vbL" title="转到左侧"><svg viewBox="0 0 24 24"><path d="M19 13a7 7 0 1 1-3-8"/><path d="M17 1v5h-5" transform="translate(0 0)"/></svg></div>
+    <div class="ui vb" id="vbR" title="转到右侧"><svg viewBox="0 0 24 24"><path d="M5 13a7 7 0 1 0 3-8"/><path d="M7 1v5h5"/></svg></div>
+    <div class="ui vcap" id="vbLcap">左侧</div>
+    <div class="ui vcap" id="vbRcap">右侧</div>
+    <div class="ui" id="toast"></div>
+    <div class="ui" id="itembar">
+      <div class="t1">本局道具</div><div class="t2">每局选装 1 种</div>
+      <div id="itemBtn" title="晃动"><svg viewBox="0 0 40 40"><rect x="11" y="11" width="18" height="18" rx="4" transform="rotate(-10 20 20)"/><path d="M5 14q-3 6 0 12M35 14q3 6 0 12"/></svg><span id="itemCount">2</span></div>
+      <div class="t3">晃动</div>
+    </div>
+    <div class="ui home"></div>
+    <div class="overlay" id="intro">
+      <div class="card">
+        <h2>GOLDEN CLAW: SORT · 玩法原型</h2>
+        <h1>超级夹娃娃：金手指</h1>
+        <ul>
+          <li><i>1</i><b>点一只金色描边的玩偶</b>：机械爪自动过去抓，最左边的空篮就只收这一类。</li>
+          <li><i>2</i><b>自动连抓</b>：爪子从刚才的位置由近到远，抓够得着的同类，装满 4 只就离场换新篮。</li>
+          <li><i>3</i><b>被压住的抓不到</b>：暗色的玩偶要先抓走上面的；够不着时篮子会等待，揭开后自动续抓。</li>
+          <li><i>4</i><b>只有 3 个篮位</b>：都在等待又没有空篮就输了。看不清后面时，点两侧按钮转到侧面看。</li>
+        </ul>
+        <button class="btn primary" id="startBtn">投入金手指硬币，开始</button>
+        <button class="btn" id="bonusPreview">直接体验奖励娃娃机</button>
+        <div class="m-note">通关后正式进入；直接体验不计本关奖励</div>
+      </div>
+    </div>
+    <div class="overlay" id="modal"><div class="card" id="modalBox"></div></div>
+  </div>
+</div>
+<aside id="side">
+  <h3>Golden Claw: Sort · 玩法原型</h3>
+  <div class="ver">v2 · S0 单关＋奖励夹取 · 本轮原型调整未回写策划案</div>
+  <div id="live">尚未开始</div>
+  <button id="spd">机械爪速度 1×</button><button id="rst">重新开始</button>
+  <button id="bonusPreviewSide">直接体验奖励机（预览）</button>
+  <h4>原型里能验证的</h4>
+  <ul>
+    <li>点击首抓 → 定类 → 由近到远自动连抓 → 满篮补位</li>
+    <li>压住遮挡、等待续抓、3 篮位卡死判负</li>
+    <li>左右视角：绕机柜转 90°，只改观察不改可抓</li>
+    <li>晃动道具、失败复活：重排后保证仍有解</li>
+    <li>头顶金币的黄金玩偶（+金币）、晃动玩偶（抓到后自动晃一次）</li>
+    <li>通关 → 摇杆瞄准 → 抓取问号隐藏款 → 揭晓入图鉴；可快速领取</li>
+  </ul>
+  <h4>状态图例</h4>
+  <div class="lg"><span class="dot" style="background:#f4a25b;box-shadow:0 0 0 2px #fff4bc,0 0 0 4px #edac08,0 0 9px #ffc62f"></span>金色轮廓＋柔和呼吸光：无遮挡，可抓</div>
+  <div class="lg"><span class="dot" style="background:#c9b9ac"></span>暗色：被压住，先抓上面的</div>
+  <div class="lg"><span class="dot coin-dot">金</span>头顶金币：黄金玩偶，身体保持原色</div>
+  <div class="lg"><span class="dot" style="background:#3b82f6"></span>蓝色 ≋ 角标：晃动玩偶</div>
+  <h4>S0 配置</h4>
+  <p>72 只＝6 类各 12 只；每类装满 3 篮。篮容量 4，共 18 篮，同时开放 3 个；初始后备 15 篮。黄金 2 只、晃动 1 只仅是原类别附加标记，不增加总数。不再有万能或缺额类别。当前种子经求解器验证有通关路径；乱点仍可能卡死。</p>
+  <h4>原型自定口径<span class="tag">待确认</span></h4>
+  <ul>
+    <li>晃动 2 次、黄金 +10、通关 100 金币、转视角 0.5 秒，均为占位值</li>
+    <li>首抓 1×，自动连抓固定 2×；右上速度开关额外整体加速，不改变这个比例</li>
+    <li>复活跳过金币／广告，每局 1 次；仍需继续选择首抓，不自动通关</li>
+    <li>奖励夹取合法命中必成功；瞄空可继续瞄准；快速领取同等奖励，每次通关只领 1 只</li>
+    <li>图鉴仅供本次页面演示，重玩保留，刷新清空；6 款名称与装饰为占位设计</li>
+    <li>未做：选装道具、额外篮位、引导分步流程、正式美术与后续关卡</li>
+  </ul>
+</aside>
+<script>
+/* Golden Claw: Sort —— 纯逻辑引擎（无 DOM）。浏览器与 Node 共用。
+ * 规则来源：Golden Claw 策划案 V1.1 修订稿 2.1–2.4、3.1–3.2、三章特殊玩偶与晃动道具。
+ * 关键口径：
+ *  - 位置固定，压住关系只看“上一层、水平距离 < PRESS_R”的位置；可抓 = 有玩偶且压住它的位置全空。
+ *  - 首抓：点击可抓玩偶 → 最左空篮定类、记录原点；随后按距原点由近到远自动抓同类。
+ *  - 跨篮：当前篮满或无目标后，按进入等待的先后服务可续抓的等待篮。
+ *  - 满篮离场，后备篮原位补入；后备用完则该位空置。
+ *  - 失败：既无自动续抓，也无合法首抓。
+ *  - 视角只改观察，不进入任何逻辑。
+ */
+(function (root) {
+  'use strict';
+
+  const TYPES = ['bunny', 'bear', 'cat', 'duck', 'frog', 'ele'];
+  const TYPE_CN = ['兔子', '小熊', '小猫', '鸭子', '青蛙', '大象'];
+  const CAP = 4;            // 篮子容量（S0）
+  const SLOTS = 3;          // 基础篮位；第 4 位锁定（额外篮位待定）
+  const STEP = 0.32;        // 同层间距（机柜半宽 = 1）
+  const PRESS_R = 0.27;     // 压住判定半径（上下层错半格时距离 0.226）
+
+  // ---------------------------------------------------------------- 随机数
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function shuffleInPlace(arr, rnd) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const value = rnd();
+      if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError('随机数必须在 [0, 1) 内');
+      const j = Math.floor(value * (i + 1));
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  // ---------------------------------------------------------------- 关卡生成（S0：6 类 × 12，黄金与晃动仅为附加标记）
+  function buildPositions(rnd) {
+    const pos = [];
+    const grid = (n, z) => {
+      const half = (n - 1) * STEP / 2;
+      const out = [];
+      for (let iy = 0; iy < n; iy++) for (let ix = 0; ix < n; ix++) {
+        out.push({ x: -half + ix * STEP, y: -half + iy * STEP, z, ring: Math.min(ix, iy, n - 1 - ix, n - 1 - iy) });
+      }
+      return out;
+    };
+    const L0 = grid(6, 0), L1 = grid(5, 1);
+    // 后高前低：玩偶堆靠着背板堆起来（真实娃娃机常见），盖住背板，前排留给玩家开局选择
+    // 第 2 层：4×4 的后两排 8 个＋前面一排随机 1 个；第 3 层：3×3 的最后一排取 2 个
+    const L2all = grid(4, 2), L3all = grid(3, 3);
+    const back2 = L2all.filter(p => p.y > 0), mid2 = shuffleInPlace(L2all.filter(p => Math.abs(p.y + STEP * .5) < .01), rnd);
+    const L2 = back2.concat(mid2.slice(0, 1));
+    const L3 = shuffleInPlace(L3all.filter(p => p.y > STEP * .9), rnd).slice(0, 2);
+    for (const p of L0.concat(L1, L2, L3)) {
+      pos.push({ x: p.x + (rnd() - .5) * .05, y: p.y + (rnd() - .5) * .05, z: p.z, tilt: Math.round((rnd() - .5) * 32) });
+    }
+    // 压住关系（位置级，固定不变）
+    const pressers = pos.map(() => []), supports = pos.map(() => []);
+    for (let i = 0; i < pos.length; i++) for (let j = 0; j < pos.length; j++) {
+      if (pos[j].z === pos[i].z + 1 && Math.hypot(pos[i].x - pos[j].x, pos[i].y - pos[j].y) < PRESS_R) {
+        pressers[i].push(j); supports[j].push(i);
+      }
+    }
+    return { pos, pressers, supports };
+  }
+
+  function createLevel(seed) {
+    if (!Number.isInteger(seed) || seed < 0 || seed > 0xFFFFFFFF) throw new RangeError('seed 必须是无符号 32 位整数');
+    const rnd = mulberry32(seed);
+    const geo = buildPositions(rnd);
+    const dolls = [];
+    for (let t = 0; t < TYPES.length; t++) {
+      for (let k = 0; k < 12; k++) dolls.push({ type: t, gold: false, shake: false });
+    }
+    const marked = shuffleInPlace([...dolls.keys()], rnd);
+    dolls[marked[0]].gold = true; dolls[marked[1]].gold = true; dolls[marked[2]].shake = true;
+    const posIdx = shuffleInPlace([...geo.pos.keys()], rnd);
+    const occ = new Int16Array(geo.pos.length).fill(-1);
+    for (let id = 0; id < dolls.length; id++) occ[posIdx[id]] = id;
+    return { seed, geo, dolls, totalBaskets: dolls.length / CAP, occ };
+  }
+
+  // ---------------------------------------------------------------- 状态
+  function newState(level) {
+    const slots = [];
+    for (let i = 0; i < SLOTS; i++) slots.push(emptyBasket());
+    return {
+      occ: Int16Array.from(level.occ),
+      slots,                         // null = 空位（后备已用完）
+      supply: level.totalBaskets - SLOTS,
+      serving: -1,
+      waitSeq: 0,
+      pendingShake: false,
+      goldGot: 0,
+    };
+  }
+  function emptyBasket() { return { type: -1, count: 0, ox: 0, oy: 0, wait: 0 }; }
+  function cloneState(s) {
+    return {
+      occ: Int16Array.from(s.occ),
+      slots: s.slots.map(b => (b ? Object.assign({}, b) : null)),
+      supply: s.supply, serving: s.serving, waitSeq: s.waitSeq,
+      pendingShake: s.pendingShake, goldGot: s.goldGot,
+    };
+  }
+
+  function validPosition(s, p) { return Number.isInteger(p) && p >= 0 && p < s.occ.length; }
+  function grabbable(level, s, p) {
+    if (!validPosition(s, p) || s.occ[p] < 0) return false;
+    const pr = level.geo.pressers[p];
+    for (let i = 0; i < pr.length; i++) if (s.occ[pr[i]] >= 0) return false;
+    return true;
+  }
+  function activeBlockers(level, s, p) { return validPosition(s, p) ? level.geo.pressers[p].filter(q => s.occ[q] >= 0) : []; }
+  function dollAt(level, s, p) { return validPosition(s, p) && s.occ[p] >= 0 ? level.dolls[s.occ[p]] : null; }
+  function remaining(s) { let n = 0; for (let i = 0; i < s.occ.length; i++) if (s.occ[i] >= 0) n++; return n; }
+  function unfinishedOfType(s, t) {
+    for (let i = 0; i < s.slots.length; i++) { const b = s.slots[i]; if (b && b.type === t && b.count < CAP) return i; }
+    return -1;
+  }
+  function firstEmptySlot(s) {
+    for (let i = 0; i < s.slots.length; i++) { const b = s.slots[i]; if (b && b.type < 0) return i; }
+    return -1;
+  }
+  // 自动连抓目标：同类、可抓；距原点最近，同距按位置序号
+  function nearestTarget(level, s, slot) {
+    const b = s.slots[slot];
+    let best = -1, bd = 1e9;
+    for (let p = 0; p < s.occ.length; p++) {
+      const id = s.occ[p];
+      if (id < 0) continue;
+      const d = level.dolls[id];
+      if (d.type !== b.type || !grabbable(level, s, p)) continue;
+      const q = level.geo.pos[p];
+      const dist = Math.round(Math.hypot(q.x - b.ox, q.y - b.oy) * 1e4);
+      if (dist < bd) { bd = dist; best = p; }
+    }
+    return best;
+  }
+
+  // ---------------------------------------------------------------- 操作合法性
+  // 返回 {ok, reason}；reason：empty / pressed / collecting / noslot
+  function checkFirstGrab(level, s, p) {
+    if (!validPosition(s, p) || s.occ[p] < 0) return { ok: false, reason: 'empty' };
+    if (!grabbable(level, s, p)) return { ok: false, reason: 'pressed' };
+    const d = level.dolls[s.occ[p]];
+    if (unfinishedOfType(s, d.type) >= 0) return { ok: false, reason: 'collecting' };
+    const slot = firstEmptySlot(s);
+    if (slot < 0) return { ok: false, reason: 'noslot' };
+    return { ok: true, kind: 'first', slot };
+  }
+
+  // ---------------------------------------------------------------- 状态变化（逐步，供动画驱动）
+  // 取走位置 p 的玩偶放进 slot。返回事件。
+  function take(level, s, p, slot) {
+    if (!grabbable(level, s, p)) throw new RangeError('抓取位置无效、为空或被压住');
+    if (!Number.isInteger(slot) || slot < 0 || slot >= s.slots.length) throw new RangeError('篮位序号无效');
+    const id = s.occ[p];
+    const d = level.dolls[id];
+    const b = s.slots[slot];
+    if (!b || b.type !== d.type || b.count >= CAP) throw new Error('篮子未定类、类别不符或已满');
+    s.occ[p] = -1;
+    b.count++;
+    if (d.gold) s.goldGot++;
+    if (d.shake) s.pendingShake = true;
+    const ev = { id, pos: p, slot, full: b.count >= CAP, type: b.type };
+    if (ev.full) {
+      if (s.supply > 0) { s.supply--; s.slots[slot] = emptyBasket(); ev.refill = true; }
+      else { s.slots[slot] = null; ev.refill = false; }
+      if (s.serving === slot) s.serving = -1;
+    }
+    return ev;
+  }
+
+  function startFirstGrab(level, s, p) {
+    const chk = checkFirstGrab(level, s, p);
+    if (!chk.ok) return chk;
+    const d = level.dolls[s.occ[p]], q = level.geo.pos[p];
+    s.slots[chk.slot] = { type: d.type, count: 0, ox: q.x, oy: q.y, wait: 0 };
+    s.serving = chk.slot;
+    return { ok: true, kind: 'first', slot: chk.slot, pos: p };
+  }
+
+  // 下一次自动抓取（不修改玩偶，只更新 serving / 等待序）
+  function nextAuto(level, s) {
+    if (s.serving >= 0) {
+      const b = s.slots[s.serving];
+      if (b && b.type >= 0 && b.count < CAP) {
+        const t = nearestTarget(level, s, s.serving);
+        if (t >= 0) return { slot: s.serving, pos: t };
+        b.wait = ++s.waitSeq;
+      }
+      s.serving = -1;
+    }
+    let best = -1, bw = 1e9;
+    for (let i = 0; i < s.slots.length; i++) {
+      const b = s.slots[i];
+      if (!b || b.type < 0 || b.count >= CAP) continue;
+      if (nearestTarget(level, s, i) < 0) continue;
+      if (b.wait < bw) { bw = b.wait; best = i; }
+    }
+    if (best < 0) return null;
+    s.serving = best;
+    return { slot: best, pos: nearestTarget(level, s, best) };
+  }
+
+  function runService(level, s, onTake) {
+    let a;
+    while ((a = nextAuto(level, s))) {
+      const ev = take(level, s, a.pos, a.slot);
+      if (onTake) onTake(ev);
+    }
+  }
+
+  function isWin(s) {
+    for (let p = 0; p < s.occ.length; p++) if (s.occ[p] >= 0) return false;
+    for (const b of s.slots) if (b && b.type >= 0 && b.count < CAP) return false;
+    return true;
+  }
+
+  // 空闲时所有合法首抓位置
+  function legalMoves(level, s) {
+    const out = [];
+    for (let p = 0; p < s.occ.length; p++) {
+      if (s.occ[p] < 0) continue;
+      if (checkFirstGrab(level, s, p).ok) out.push(p);
+    }
+    return out;
+  }
+  function isFailed(level, s) {
+    if (isWin(s)) return false;
+    const probe = cloneState(s);
+    if (nextAuto(level, probe)) return false;
+    return legalMoves(level, s).length === 0;
+  }
+
+  // 一步完整操作（求解器 / 随机试玩用）：点击首抓，然后自动服务到空闲
+  function applyMove(level, s, p) {
+    const r = startFirstGrab(level, s, p);
+    if (!r.ok) return false;
+    take(level, s, p, r.slot);
+    runService(level, s);
+    s.pendingShake = false; // 求解与随机试玩不使用晃动，验证的是当前固定排列
+    return true;
+  }
+
+  // ---------------------------------------------------------------- 求解
+  function stateKey(level, s) {
+    let k = '';
+    for (let p = 0; p < s.occ.length; p++) {
+      const id = s.occ[p];
+      k += id < 0 ? '.' : String(level.dolls[id].type);
+    }
+    const order = s.slots.map((b, i) => [b, i]).filter(x => x[0] && x[0].type >= 0 && x[0].count < CAP)
+      .sort((a, b) => a[0].wait - b[0].wait || a[1] - b[1]);
+    k += '|' + s.supply + '|' + s.slots.map(b => (!b ? 'x' : b.type < 0 ? 'e' : `${b.type}:${b.count}:${b.ox},${b.oy}`)).join(';');
+    k += '|' + order.map(x => x[1]).join('');
+    return k;
+  }
+
+  function progressScore(level, s) {
+    let sc = -remaining(s) * 10;
+    for (const b of s.slots) if (b && b.type >= 0 && b.count < CAP) sc -= 6 + (CAP - b.count);
+    sc += legalMoves(level, s).length;
+    return sc;
+  }
+
+  // 启发式 DFS 返回一条可行路径，不承诺最短；exhausted 表示预算用尽，不能据此判定无解。
+  function solve(level, s0, budget = 6000) {
+    if (!Number.isInteger(budget) || budget < 1) throw new RangeError('求解预算必须是正整数');
+    const seen = new Set();
+    let nodes = 0, exhausted = false;
+    const path = [];
+    function dfs(s) {
+      if (isWin(s)) return true;
+      if (nodes >= budget) { exhausted = true; return false; }
+      nodes++;
+      const key = stateKey(level, s);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      const moves = legalMoves(level, s);
+      const cand = [], keys = new Set();
+      for (const p of moves) {
+        const t = cloneState(s);
+        applyMove(level, t, p);
+        const kk = stateKey(level, t);
+        if (keys.has(kk)) continue;
+        keys.add(kk);
+        cand.push({ p, t, sc: progressScore(level, t) });
+      }
+      cand.sort((a, b) => b.sc - a.sc);
+      for (const c of cand) {
+        path.push(c.p);
+        if (dfs(c.t)) return true;
+        path.pop();
+        if (exhausted) return false;
+      }
+      return false;
+    }
+    const start = cloneState(s0);
+    runService(level, start);
+    const solved = dfs(start);
+    return { solved, exhausted, nodes, path: solved ? path.slice() : null };
+  }
+
+  // 随机乱点：每次在合法首抓里均匀随机
+  function randomPlayout(level, s0, rnd) {
+    if (typeof rnd !== 'function') throw new TypeError('随机试玩需要随机数函数');
+    const s = cloneState(s0);
+    runService(level, s);
+    let steps = 0;
+    while (!isWin(s) && steps < 200) {
+      const m = legalMoves(level, s);
+      if (!m.length) return { win: false, left: remaining(s) };
+      const value = rnd();
+      if (!Number.isFinite(value) || value < 0 || value >= 1) throw new RangeError('随机数必须在 [0, 1) 内');
+      applyMove(level, s, m[Math.floor(value * m.length)]);
+      steps++;
+    }
+    return { win: isWin(s), left: remaining(s) };
+  }
+
+  // ---------------------------------------------------------------- 晃动 / 复活：只应用已求解成功的重排；搜索未找到时抛错且不改状态
+  // 只交换“谁在哪个位置”，被占用的位置集合不变；篮子类别、进度、原点保持不变。
+  function reshuffle(level, s, rnd, tries = 40) {
+    if (typeof rnd !== 'function') throw new TypeError('重排需要随机数函数');
+    if (!Number.isInteger(tries) || tries < 0) throw new RangeError('重排尝试次数必须是非负整数');
+    const occupied = [];
+    for (let p = 0; p < s.occ.length; p++) if (s.occ[p] >= 0) occupied.push(p);
+    const ids = occupied.map(p => s.occ[p]);
+    let best = null, exhausted = false;
+    for (let t = 0; t < tries; t++) {
+      const perm = shuffleInPlace(ids.slice(), rnd);
+      const cand = cloneState(s);
+      occupied.forEach((p, i) => { cand.occ[p] = perm[i]; });
+      cand.serving = -1;
+      const r = solve(level, cand, 2500);
+      exhausted = exhausted || r.exhausted;
+      if (r.solved) { best = cand; break; }
+    }
+    if (!best) {
+      // 兜底排列也必须实际求解验证，不能用摆放启发式冒充可解证明
+      const order = occupied.slice().sort((a, b) => level.geo.pos[b].z - level.geo.pos[a].z || a - b);
+      const sorted = ids.slice().sort((a, b) => level.dolls[a].type - level.dolls[b].type);
+      const cand = cloneState(s);
+      order.forEach((p, i) => { cand.occ[p] = sorted[i]; });
+      cand.serving = -1;
+      const r = solve(level, cand, 2500);
+      exhausted = exhausted || r.exhausted;
+      if (r.solved) best = cand;
+    }
+    if (!best) {
+      const error = new Error(`重排未找到已验证可解的排列（随机尝试 ${tries} 次及兜底 1 次${exhausted ? '；存在求解预算用尽，未证明无解' : '；候选均未通过求解'}）`);
+      error.code = 'RESHUFFLE_UNSOLVED';
+      error.exhausted = exhausted;
+      throw error;
+    }
+    const moves = [];
+    occupied.forEach(p => { moves.push({ id: best.occ[p], to: p, from: occupied[ids.indexOf(best.occ[p])] }); });
+    s.occ = best.occ;
+    s.serving = -1;
+    s.pendingShake = false;
+    return moves; // 每只玩偶从 from 位置移动到 to 位置
+  }
+
+  // ---------------------------------------------------------------- 相机（与线稿同一镜头；视角只改观察）
+  const CAM = { PITCH: 50, DIST: 3.1, TARGET_Z: 0.45, HTOP: 1.7, FIT_W: 1.0, RW: 0.17, LAYER_H: 0.27, CLAW_Z: 1.32 };
+  function camRaw(u, d, z) {
+    const th = CAM.PITCH * Math.PI / 180, c = Math.cos(th), sn = Math.sin(th);
+    const cy = -CAM.DIST * c, cz = CAM.TARGET_Z + CAM.DIST * sn;
+    const vy = d - cy, vz = z - cz;
+    const yc = vy * sn + vz * c, zc = vy * c - vz * sn;
+    return [u / zc, yc / zc, zc];
+  }
+  function makeCamera(region) {
+    const [x0, y0, x1, y1] = region;
+    // 按宽度定比例：机柜中段的左右侧壁对齐画框左右边；近处底边贴画框下沿
+    const K = ((x1 - x0) / 2) / camRaw(CAM.FIT_W, 0, 0)[0];
+    const OX = (x0 + x1) / 2, OY = y1 - K * (-camRaw(0, -0.97, 0)[1]);
+    // yaw：0 正面；+90 左侧视角（机器正面在画面右边）；-90 右侧视角
+    function project(x, y, z, yawDeg) {
+      const a = yawDeg * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a);
+      const u = x * ca - y * sa, d = x * sa + y * ca;
+      const r = camRaw(u, d, z);
+      return { sx: OX + K * r[0], sy: OY - K * r[1], zc: r[2] };
+    }
+    return { K, project };
+  }
+  // 玩偶屏幕几何：底点投影，头心在底点上方 1.3r
+  function dollScreen(cam, q, yaw, isEle) {
+    const pr = cam.project(q.x, q.y, q.z * CAM.LAYER_H, yaw);
+    const r = cam.K * CAM.RW / pr.zc * (isEle ? 1.18 : 1);
+    return { x: pr.sx, y: pr.sy - 1.3 * r, r, zc: pr.zc };
+  }
+  // 头部被更近玩偶挡住的比例
+  function occlusion(level, s, cam, p, yaw) {
+    if (!dollAt(level, s, p)) throw new RangeError('遮挡查询需要有效的已占用位置');
+    const me = dollScreen(cam, level.geo.pos[p], yaw, level.dolls[s.occ[p]].type === 5);
+    const near = [];
+    for (let q = 0; q < s.occ.length; q++) {
+      if (q === p || s.occ[q] < 0) continue;
+      const o = dollScreen(cam, level.geo.pos[q], yaw, level.dolls[s.occ[q]].type === 5);
+      if (o.zc < me.zc) near.push(o);
+    }
+    let hit = 0;
+    const n = 240;
+    for (let k = 0; k < n; k++) {
+      const ang = k * 2.399963, rad = me.r * Math.sqrt((k + .5) / n);
+      const px = me.x + rad * Math.cos(ang), py = me.y + rad * Math.sin(ang);
+      for (const o of near) {
+        const inHead = (px - o.x) ** 2 + (py - o.y) ** 2 < o.r * o.r;
+        const inBody = ((px - o.x) / (o.r * .9)) ** 2 + ((py - o.y - .8 * o.r) / (o.r * .88)) ** 2 < 1;
+        if (inHead || inBody) { hit++; break; }
+      }
+    }
+    return hit / n;
+  }
+
+  const API = {
+    TYPES, TYPE_CN, CAP, SLOTS, CAM,
+    mulberry32, createLevel, newState, cloneState,
+    grabbable, activeBlockers, dollAt, remaining, unfinishedOfType, firstEmptySlot,
+    checkFirstGrab, startFirstGrab, nextAuto, take, runService, isWin, isFailed, legalMoves,
+    applyMove, solve, randomPlayout, reshuffle, makeCamera, dollScreen, occlusion,
+  };
+  root.GCEngine = API;
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* 奖励娃娃机：独立界面、输入与动画，不接管主关卡或金币。 */
+(function () {
+  'use strict';
+
+  const W = 430;
+  const H = 932;
+  const CANVAS_TOP = 190;
+  const CANVAS_HEIGHT = 500;
+  const LIMIT = { minX: 0.08, maxX: 0.92, minY: 0.08, maxY: 0.9 };
+  const HOME_Z = 112;
+  const DOWN_Z = 26;
+  const EXIT = { x: 0.87, y: 1.12 };
+  const ITEMS = [
+    { id: 'star-rabbit', type: 0, name: '星愿兔', decoration: 'star-bow', color: '#c87896' },
+    { id: 'honey-bear', type: 1, name: '蜜糖熊', decoration: 'honey-medal', color: '#b48b42' },
+    { id: 'moon-cat', type: 2, name: '月光猫', decoration: 'moon-ribbon', color: '#8797c0' },
+    { id: 'cloud-duck', type: 3, name: '云朵鸭', decoration: 'sailor-bow', color: '#718da9' },
+    { id: 'lucky-frog', type: 4, name: '幸运蛙', decoration: 'clover-ribbon', color: '#70a48a' },
+    { id: 'dream-elephant', type: 5, name: '梦游象', decoration: 'dream-stars', color: '#8b88b6' }
+  ];
+  const DURATIONS = {
+    aligning: 380, descending: 780, closing: 420, ascending: 780,
+    transporting: 1000, dropping: 620, revealing: 900
+  };
+  const NEXT = {
+    aligning: 'descending', descending: 'closing', closing: 'ascending',
+    ascending: 'transporting', transporting: 'dropping', dropping: 'revealing',
+    revealing: 'result'
+  };
+  const PHASE_HINTS = {
+    aligning: '正在对准问号娃娃...', descending: '爪子下降中...',
+    closing: '闭爪夹取 · 合法夹取必定成功', ascending: '夹稳了，正在上升...',
+    transporting: '正在搬往出货口...', dropping: '问号娃娃正在出货...',
+    revealing: '隐藏款揭晓 · 图鉴点亮中', result: '已加入本次演示图鉴'
+  };
+  // 只保留页面内存；预览池、真实收藏和真实领取凭据互相隔离。
+  const realCollection = new Map();
+  const previewCollection = new Map();
+  const roundRecords = new Map();
+  const claimedRoundIds = new Set();
+  let singleton = null;
+
+  const CSS = `
+#bonusOverlay{position:absolute;inset:0;width:430px;height:932px;z-index:40;isolation:isolate;overflow:hidden;background:#fbfaf8;color:#344b64;font-family:"Microsoft YaHei","PingFang SC",sans-serif;touch-action:none;user-select:none;overscroll-behavior:contain;outline:none}
+#bonusOverlay[hidden],#bonusOverlay [hidden]{display:none!important}
+#bonusOverlay,#bonusOverlay *{box-sizing:border-box}
+#bonusOverlay *{margin:0;padding:0}
+#bonusOverlay .gb-brand{position:absolute;left:28px;top:25px;font:700 10px/14px Consolas,monospace;letter-spacing:1.6px;color:#8c99a5}
+#bonusOverlay h1{position:absolute;left:28px;top:45px;font-size:28px;line-height:36px;letter-spacing:1px;color:#263e56}
+#bonusOverlay .gb-free{position:absolute;right:28px;top:50px;padding:7px 12px;border:1px solid #d9bb84;border-radius:20px;background:#fff5df;font-size:13px;font-weight:700;color:#967038}
+#bonusOverlay .gb-subtitle{position:absolute;left:28px;top:87px;max-width:374px;font-size:12px;line-height:17px;color:#718091}
+#bonusOverlay .gb-album-heading{position:absolute;left:28px;top:110px;width:374px;display:flex;justify-content:space-between;font-size:11px;line-height:15px;font-weight:700;color:#65768a}
+#bonusOverlay #bonusAlbum{position:absolute;left:28px;top:130px;width:374px;height:56px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;list-style:none}
+#bonusOverlay .gb-album-cell{height:56px;border:1px solid #dce2e8;border-radius:11px;background:#f2f4f5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#94a0ac;overflow:hidden}
+#bonusOverlay .gb-album-cell.gb-lit{background:#fff4dc;border-color:#d7b371;color:#98703b;box-shadow:inset 0 0 0 1px #fff9ed;animation:gcbAlbumUnlock .65s ease-out}
+@keyframes gcbAlbumUnlock{0%{filter:brightness(1.3);box-shadow:inset 0 0 0 3px #e6c37d}55%{filter:brightness(1.08);box-shadow:inset 0 0 0 2px #fffdf1}100%{filter:brightness(1);box-shadow:inset 0 0 0 1px #fff9ed}}
+#bonusOverlay .gb-album-symbol{height:26px;font:700 23px/26px Georgia,serif}
+#bonusOverlay .gb-album-symbol svg{display:block;width:27px;height:26px}
+#bonusOverlay .gb-album-name{font-size:10px;line-height:12px;white-space:nowrap}
+#bonusOverlay #bonusCanvas{position:absolute;left:0;top:190px;width:430px;height:500px;z-index:1;pointer-events:none}
+#bonusOverlay #bonusHint{position:absolute;left:20px;top:700px;width:390px;height:30px;text-align:center;font-size:14px;line-height:30px;font-weight:700;color:#647789;border-radius:15px;background:#edf1f4}
+#bonusOverlay #bonusHint.gb-ready{color:#936628;background:#fff2d2;border:1px solid #d9b575;line-height:28px}
+#bonusOverlay #bonusHint.gb-denied{color:#9b6750;background:#fcf0e6}
+#bonusOverlay .gb-controls{position:absolute;left:22px;top:737px;width:386px;height:134px;background:#f0f2f3;border:1px solid #d8dfe5;border-radius:25px;box-shadow:inset 0 2px 0 #fff}
+#bonusOverlay #bonusJoystick{position:absolute;left:15px;top:7px;width:118px;height:118px;border:2px solid #b8c4d0;border-radius:50%;background:radial-gradient(circle,#e0e6eb 0 48%,#f9faf9 49% 65%,#e4e9ec 66%);box-shadow:0 4px 0 #c5ced7;touch-action:none;cursor:grab;outline:none}
+#bonusOverlay #bonusJoystick[aria-disabled="true"]{opacity:.56;cursor:default}
+#bonusOverlay .gb-stick-mark{position:absolute;font:700 12px/16px sans-serif;color:#8798a7;pointer-events:none}
+#bonusOverlay .gb-up{left:50px;top:4px}#bonusOverlay .gb-down{left:50px;bottom:4px}
+#bonusOverlay .gb-left{left:7px;top:48px}#bonusOverlay .gb-right{right:7px;top:48px}
+#bonusOverlay #bonusKnob{position:absolute;left:30px;top:30px;width:54px;height:54px;border:2px solid #ead8ae;border-radius:50%;background:radial-gradient(circle at 35% 27%,#fffdf2,#e5c88e);box-shadow:0 5px 8px #53677b30,inset 0 1px 0 #fff;pointer-events:none;will-change:transform}
+#bonusOverlay .gb-stick-caption{position:absolute;left:144px;top:43px;width:64px;font-size:11px;line-height:20px;color:#7b8a98;text-align:center}
+#bonusOverlay button{font-family:inherit;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none}
+#bonusOverlay button:focus-visible,#bonusOverlay #bonusJoystick:focus-visible{outline:3px solid #c99a55;outline-offset:3px}
+#bonusOverlay button:disabled{cursor:default;opacity:.55}
+#bonusOverlay #bonusGrab{position:absolute;right:17px;top:25px;width:140px;height:70px;border:2px solid #b18748;border-radius:23px;background:linear-gradient(#f8e5b8,#dfbb78);box-shadow:0 5px 0 #ba945c;color:#624b2b;font-size:24px;line-height:30px;font-weight:800}
+#bonusOverlay #bonusGrab:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #ba945c}
+#bonusOverlay .gb-grab-caption{position:absolute;right:17px;top:104px;width:140px;text-align:center;color:#8795a2;font-size:10px}
+#bonusOverlay #bonusQuick{position:absolute;left:95px;top:880px;width:240px;height:29px;background:transparent;border:0;border-bottom:1px solid #bec8cf;border-radius:0;color:#6d7f90;font-size:12px;line-height:28px}
+#bonusOverlay .gb-footnote{position:absolute;left:20px;top:915px;width:390px;font-size:10px;line-height:12px;text-align:center;color:#98a2ab}
+#bonusOverlay #bonusReveal{position:absolute;z-index:4;left:30px;top:246px;width:370px;height:426px;text-align:center;pointer-events:auto}
+#bonusOverlay .gb-reveal-kicker{position:absolute;left:12px;top:24px;width:346px;font-size:13px;line-height:18px;font-weight:700;color:#a07b42;letter-spacing:2px}
+#bonusOverlay .gb-reveal-name{position:absolute;left:12px;top:52px;width:346px;font-size:25px;line-height:32px;color:#30465f}
+#bonusOverlay .gb-guarantee{position:absolute;left:10px;top:238px;width:350px;font-size:14px;line-height:22px;font-weight:700;color:#96703b}
+#bonusOverlay .gb-joined{position:absolute;left:10px;top:266px;width:350px;font-size:13px;line-height:20px;color:#63788b}
+#bonusOverlay .gb-reveal-progress{position:absolute;left:10px;top:294px;width:350px;font-size:12px;line-height:20px;color:#8a97a3}
+#bonusOverlay #bonusDone{position:absolute;left:30px;top:332px;width:310px;height:52px;border:1px solid #a9b7c4;border-radius:16px;background:#344b64;color:#fffaf0;font-size:16px;line-height:50px;font-weight:700}
+#bonusOverlay .gb-result-note{position:absolute;left:10px;top:396px;width:350px;font-size:10px;line-height:14px;color:#8e9aa5}
+`;
+
+  function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+  function project(x, y) { return { x: 215 + (x - 0.5) * (264 + 80 * y), y: 419 + 142 * y }; }
+  function cloneReward(reward) { return reward ? Object.assign({}, reward) : null; }
+  function collectionValues(pool) {
+    return ITEMS.filter(item => pool.has(item.id)).map(item => Object.assign({}, pool.get(item.id)));
+  }
+  function makeRecord(roundId, preview) {
+    const types = [0, 1, 2, 3, 4, 5];
+    for (let i = types.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = types[i]; types[i] = types[j]; types[j] = temp;
+    }
+    return {
+      roundId: roundId, key: roundId == null ? null : String(roundId), preview: preview,
+      claimed: false, busy: false, phase: 'idle', elapsed: 0, clock: 0,
+      claw: { x: 0.5, y: 0.9, z: HOME_Z, open: 1 },
+      dolls: types.map((type, i) => ({ x: [0.22, 0.5, 0.78][i % 3], y: i < 3 ? 0.25 : 0.7, type: type, taken: false })),
+      chosen: -1, origin: null, dropY: 0, reward: null
+    };
+  }
+
+  function create(options) {
+    options = options || {};
+    if (singleton) return singleton;
+    const phone = document.getElementById('phone');
+    if (!phone) throw new Error('GCBonus.create requires #phone');
+    if (typeof options.drawDoll !== 'function') throw new TypeError('GCBonus.create requires drawDoll');
+    const drawDoll = options.drawDoll;
+    const playSound = typeof options.sfx === 'function' ? options.sfx : function () {};
+    const style = document.createElement('style');
+    style.textContent = CSS;
+    document.head.appendChild(style);
+    const overlay = document.createElement('section');
+    overlay.id = 'bonusOverlay';
+    overlay.hidden = true;
+    overlay.tabIndex = -1;
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', '奖励娃娃机');
+    overlay.innerHTML = `
+<div class="gb-brand">GOLDEN CLAW / S0 BONUS</div>
+<h1>奖励娃娃机</h1><span class="gb-free">免费一次</span>
+<p class="gb-subtitle"></p>
+<div class="gb-album-heading"><span>本次演示图鉴</span><span class="gb-album-progress">0 / 6</span></div>
+<ul id="bonusAlbum" aria-label="本次演示图鉴，共六款"></ul>
+<canvas id="bonusCanvas" width="430" height="500" aria-hidden="true"></canvas>
+<p id="bonusHint" role="status" aria-live="polite"></p>
+<div class="gb-controls">
+  <div id="bonusJoystick" role="group" tabindex="0" aria-label="固定摇杆：向上为后方，拖拽或长按移动，也可用方向键和 WASD">
+    <span class="gb-stick-mark gb-up">^</span><span class="gb-stick-mark gb-down">v</span>
+    <span class="gb-stick-mark gb-left">&lt;</span><span class="gb-stick-mark gb-right">&gt;</span>
+    <div id="bonusKnob"></div>
+  </div>
+  <p class="gb-stick-caption">摇杆瞄准<br>上 = 后方</p>
+  <button id="bonusGrab" type="button">抓取</button><span class="gb-grab-caption">对准后按下 / Space</span>
+</div>
+<button id="bonusQuick" type="button">快速领取 · 相同隐藏款奖池</button>
+<p class="gb-footnote">方向键 / WASD 移动 · 瞄空不扣次数 · 无收费、无广告</p>
+<div id="bonusReveal" hidden role="group" aria-label="隐藏款揭晓">
+  <p class="gb-reveal-kicker">隐藏款揭晓</p><h2 class="gb-reveal-name"></h2>
+  <p class="gb-guarantee">合法夹取必定成功</p>
+  <p class="gb-joined">已加入本次演示图鉴</p><p class="gb-reveal-progress"></p>
+  <button id="bonusDone" type="button" disabled></button>
+  <p class="gb-result-note"></p>
+</div>`;
+    phone.appendChild(overlay);
+    const find = selector => overlay.querySelector(selector);
+    const canvas = find('#bonusCanvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('GCBonus requires Canvas 2D');
+    const joystick = find('#bonusJoystick');
+    const knob = find('#bonusKnob');
+    const grab = find('#bonusGrab');
+    const quick = find('#bonusQuick');
+    const hint = find('#bonusHint');
+    const album = find('#bonusAlbum');
+    const reveal = find('#bonusReveal');
+    const done = find('#bonusDone');
+    const albumCells = ITEMS.map(() => {
+      const cell = document.createElement('li');
+      cell.className = 'gb-album-cell';
+      cell.innerHTML = '<span class="gb-album-symbol">?</span><span class="gb-album-name">隐藏款</span>';
+      album.appendChild(cell);
+      return cell;
+    });
+    const keys = new Set();
+    const stick = { x: 0, y: 0 };
+    let visible = false;
+    let record = null;
+    let onDone = null;
+    let doneDelivered = false;
+    let pointerId = null;
+    let spaceHeld = false;
+    let rafId = null;
+    let lastTime = null;
+    let resizeTime = 0;
+    let pixelScale = 1;
+    let deniedUntil = 0;
+    let oldFocus = null;
+    let oldInert = [];
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+      if (visible) resizeCanvas();
+    }) : null;
+
+    function pool() { return record && record.preview ? previewCollection : realCollection; }
+    function sound(name) {
+      try { playSound(name); } catch (error) { /* 音效异常不影响领奖。 */ }
+    }
+    function targetIndex() {
+      if (!record || record.phase === 'result' || record.phase === 'revealing') return -1;
+      if (record.busy) return record.chosen;
+      let best = -1;
+      let distance = 1;
+      record.dolls.forEach((doll, i) => {
+        if (doll.taken) return;
+        const value = Math.pow((record.claw.x - doll.x) / 0.115, 2) + Math.pow((record.claw.y - doll.y) / 0.14, 2);
+        if (value <= distance) { distance = value; best = i; }
+      });
+      return best;
+    }
+    function updateAlbum() {
+      const active = pool();
+      albumCells.forEach((cell, i) => {
+        const collected = active.has(ITEMS[i].id);
+        cell.classList.toggle('gb-lit', collected);
+        cell.setAttribute('aria-label', collected ? ITEMS[i].name + '，已点亮' : '未揭晓隐藏款');
+        cell.querySelector('.gb-album-name').textContent = collected ? ITEMS[i].name : '隐藏款';
+        cell.querySelector('.gb-album-symbol').innerHTML = collected
+          ? '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 2 L17 10 L26 10 L19 16 L22 25 L14 20 L6 25 L9 16 L2 10 L11 10 Z" fill="#d5ae64" stroke="#ae8545"/><path d="M11 18 L9 27 L14 24 L19 27 L17 18" fill="#fff0c7" stroke="#ae8545"/></svg>'
+          : '?';
+      });
+      find('.gb-album-progress').textContent = active.size + ' / 6';
+    }
+    function updateHint() {
+      if (!record) return;
+      let text;
+      let mode = '';
+      if (record.phase !== 'idle') text = PHASE_HINTS[record.phase];
+      else if (record.clock < deniedUntil) {
+        text = '这里没有娃娃 · 不扣次数，请继续瞄准'; mode = 'gb-denied';
+      } else if (targetIndex() >= 0) {
+        text = '已对准，按抓取'; mode = 'gb-ready';
+      } else text = '摇杆对准问号娃娃，再按抓取';
+      if (hint.textContent !== text) hint.textContent = text;
+      const className = mode;
+      if (hint.className !== className) hint.className = className;
+    }
+    function updateControls() {
+      const locked = !record || record.busy || record.claimed;
+      grab.disabled = locked;
+      quick.disabled = locked;
+      joystick.setAttribute('aria-disabled', String(locked));
+      done.disabled = !record || record.phase !== 'result' || record.busy;
+      find('.gb-free').textContent = record && record.claimed ? '已领取' : '免费一次';
+    }
+    function centerStick() {
+      stick.x = 0; stick.y = 0;
+      knob.style.transform = 'translate(0px,0px)';
+    }
+    function releasePointer() {
+      const id = pointerId;
+      pointerId = null;
+      centerStick();
+      if (id !== null && joystick.hasPointerCapture && joystick.hasPointerCapture(id)) {
+        joystick.releasePointerCapture(id);
+      }
+    }
+    function resetInput() {
+      keys.clear();
+      releasePointer();
+    }
+    function moveStick(event) {
+      const rect = joystick.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      // rect 已包含 #phone 的 transform；换回固定摇杆的 CSS 坐标。
+      const x = (event.clientX - rect.left - rect.width / 2) * 118 / rect.width / 37;
+      const y = (event.clientY - rect.top - rect.height / 2) * 118 / rect.height / 37;
+      const length = Math.hypot(x, y);
+      const factor = length > 1 ? 1 / length : 1;
+      stick.x = x * factor; stick.y = y * factor;
+      knob.style.transform = 'translate(' + (stick.x * 29) + 'px,' + (stick.y * 29) + 'px)';
+      deniedUntil = 0;
+    }
+    function pointerDown(event) {
+      if (!visible || record.busy || record.claimed || pointerId !== null || (event.button != null && event.button !== 0)) return;
+      event.preventDefault();
+      pointerId = event.pointerId;
+      joystick.setPointerCapture(pointerId);
+      joystick.focus({ preventScroll: true });
+      moveStick(event);
+      sound('click');
+    }
+    function pointerMove(event) {
+      if (event.pointerId !== pointerId || !visible) return;
+      event.preventDefault();
+      moveStick(event);
+    }
+    function pointerUp(event) {
+      if (event.pointerId !== pointerId) return;
+      event.preventDefault();
+      releasePointer();
+    }
+    function pointerCancel(event) {
+      if (event.pointerId === pointerId) resetInput();
+    }
+    function blur() { resetInput(); spaceHeld = false; lastTime = null; }
+    function keyName(event) {
+      const code = event.code || '';
+      if (code === 'Space' || event.key === ' ' || event.key === 'Spacebar') return 'space';
+      const key = String(event.key || '').toLowerCase();
+      if (key === 'arrowleft' || key === 'a' || code === 'KeyA') return 'left';
+      if (key === 'arrowright' || key === 'd' || code === 'KeyD') return 'right';
+      if (key === 'arrowup' || key === 'w' || code === 'KeyW') return 'up';
+      if (key === 'arrowdown' || key === 's' || code === 'KeyS') return 'down';
+      return '';
+    }
+    function keyDown(event) {
+      if (!visible) return;
+      if (event.key === 'Tab') {
+        const focusable = reveal.hidden ? [joystick, grab, quick].filter(node => !node.disabled && node.getAttribute('aria-disabled') !== 'true') : [done].filter(node => !node.disabled);
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!focusable.length) { overlay.focus({ preventScroll: true }); return; }
+        const current = focusable.indexOf(document.activeElement);
+        const next = event.shiftKey ? (current <= 0 ? focusable.length - 1 : current - 1) : (current + 1) % focusable.length;
+        focusable[next].focus({ preventScroll: true });
+        return;
+      }
+      const key = keyName(event);
+      if (!key) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (key === 'space') {
+        if (spaceHeld || event.repeat) return;
+        spaceHeld = true;
+        if (record.phase === 'result' && document.activeElement === done) finish();
+        else claim(false);
+      } else if (!record.busy && !record.claimed) {
+        keys.add(key); deniedUntil = 0;
+      }
+    }
+    function keyUp(event) {
+      const key = keyName(event);
+      if (!visible || !key) return;
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (key === 'space') spaceHeld = false;
+      else keys.delete(key);
+    }
+    function resizeCanvas() {
+      const rect = phone.getBoundingClientRect();
+      pixelScale = clamp((window.devicePixelRatio || 1) * (rect.width > 0 ? rect.width / W : 1), 1, 4);
+      const width = Math.round(W * pixelScale);
+      const height = Math.round(CANVAS_HEIGHT * pixelScale);
+      if (canvas.width !== width) canvas.width = width;
+      if (canvas.height !== height) canvas.height = height;
+      // 使用实际整数像素比例，避免非整数缩放时边缘留白。
+      pixelScale = canvas.width / W;
+    }
+    function enterPhase(phase) {
+      record.phase = phase;
+      record.elapsed = 0;
+      if (phase === 'descending') sound('grab');
+      if (phase === 'ascending') record.dolls[record.chosen].taken = true;
+      if (phase === 'dropping') record.dropY = project(EXIT.x, EXIT.y).y - HOME_Z + 1;
+      if (phase === 'revealing') {
+        sound('land');
+        const item = ITEMS[record.dolls[record.chosen].type];
+        const active = pool();
+        const isNew = !active.has(item.id);
+        if (isNew) active.set(item.id, Object.assign({}, item));
+        record.reward = Object.assign({}, item, { isNew: isNew, preview: record.preview });
+        reveal.hidden = false;
+        find('.gb-reveal-name').textContent = item.name;
+        find('.gb-joined').textContent = '已加入本次演示图鉴' + (isNew ? ' · 新款点亮' : ' · 本款已点亮');
+        find('.gb-reveal-progress').textContent = (record.preview ? '独立预览图鉴' : '页面内存图鉴') + '进度 ' + active.size + ' / 6';
+        updateAlbum();
+        sound('win');
+      }
+      if (phase === 'result') {
+        record.busy = false;
+        done.focus({ preventScroll: true });
+      }
+      updateControls();
+      updateHint();
+    }
+    function claim(quickMode) {
+      if (!visible || !record || record.busy || record.claimed) return false;
+      let index = targetIndex();
+      if (quickMode) {
+        const available = record.dolls.map((doll, i) => doll.taken ? -1 : i).filter(i => i >= 0);
+        if (!available.length) return false;
+        index = available[Math.floor(Math.random() * available.length)];
+      }
+      if (index < 0) {
+        deniedUntil = record.clock + 1500;
+        sound('deny'); updateHint();
+        return false;
+      }
+      if (!record.preview && claimedRoundIds.has(record.key)) return false;
+      // 合法夹取同步锁定凭据；动画暂停/重开同 round 只能恢复，不能再次发放。
+      record.busy = true;
+      record.claimed = true;
+      record.chosen = index;
+      record.origin = { x: record.claw.x, y: record.claw.y };
+      if (!record.preview) {
+        claimedRoundIds.add(record.key);
+        roundRecords.set(record.key, record);
+      }
+      resetInput(); deniedUntil = 0;
+      sound('click');
+      enterPhase('aligning');
+      return true;
+    }
+    function pose(progress) {
+      const k = ease(progress);
+      const claw = record.claw;
+      const doll = record.dolls[record.chosen];
+      if (record.phase === 'aligning') {
+        claw.x = lerp(record.origin.x, doll.x, k);
+        claw.y = lerp(record.origin.y, doll.y, k);
+      } else if (record.phase === 'descending') claw.z = lerp(HOME_Z, DOWN_Z, k);
+      else if (record.phase === 'closing') claw.open = 1 - k;
+      else if (record.phase === 'ascending') claw.z = lerp(DOWN_Z, HOME_Z, k);
+      else if (record.phase === 'transporting') {
+        claw.x = lerp(doll.x, EXIT.x, k);
+        claw.y = lerp(doll.y, EXIT.y, k);
+      } else if (record.phase === 'dropping') {
+        claw.open = clamp(progress * 4, 0, 1);
+        const startY = project(EXIT.x, EXIT.y).y - HOME_Z + 1;
+        record.dropY = lerp(startY, 612, progress * progress);
+      }
+    }
+    function advance(dt) {
+      record.clock += dt;
+      if (!record.busy) {
+        if (!record.claimed) {
+          let x = stick.x + Number(keys.has('right')) - Number(keys.has('left'));
+          let y = stick.y + Number(keys.has('down')) - Number(keys.has('up'));
+          const length = Math.hypot(x, y);
+          if (length > 1) { x /= length; y /= length; }
+          if (Math.abs(x) > 0.04 || Math.abs(y) > 0.04) deniedUntil = 0;
+          record.claw.x = clamp(record.claw.x + x * dt * 0.0005, LIMIT.minX, LIMIT.maxX);
+          record.claw.y = clamp(record.claw.y + y * dt * 0.00046, LIMIT.minY, LIMIT.maxY);
+        }
+        return;
+      }
+      let remaining = dt;
+      while (record.busy && remaining > 0) {
+        const duration = DURATIONS[record.phase];
+        const step = Math.min(remaining, duration - record.elapsed);
+        record.elapsed += step; remaining -= step;
+        pose(clamp(record.elapsed / duration, 0, 1));
+        if (record.elapsed >= duration) enterPhase(NEXT[record.phase]);
+      }
+    }
+
+    function rounded(x, y, width, height, radius, fill, stroke, lineWidth) {
+      const r = Math.min(radius, width / 2, height / 2);
+      ctx.beginPath(); ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y); ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r); ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+      ctx.lineTo(x + r, y + height); ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth || 1; ctx.stroke(); }
+    }
+    function ellipse(x, y, rx, ry, fill, stroke, lineWidth) {
+      ctx.beginPath(); ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lineWidth || 1; ctx.stroke(); }
+    }
+    function polygon(points, fill, stroke) {
+      ctx.beginPath(); ctx.moveTo(points[0][0], points[0][1]);
+      points.slice(1).forEach(point => ctx.lineTo(point[0], point[1]));
+      ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+      if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke(); }
+    }
+    function line(points, color, width) {
+      ctx.beginPath(); ctx.moveTo(points[0][0], points[0][1]);
+      points.slice(1).forEach(point => ctx.lineTo(point[0], point[1]));
+      ctx.strokeStyle = color; ctx.lineWidth = width || 1; ctx.stroke();
+    }
+    function text(value, x, y, size, color) {
+      ctx.fillStyle = color; ctx.font = '700 ' + size + 'px "Microsoft YaHei",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(value, x, y);
+    }
+    function star(x, y, radius, color) {
+      const points = [];
+      for (let i = 0; i < 10; i++) {
+        const angle = -Math.PI / 2 + i * Math.PI / 5;
+        const r = i % 2 ? radius * 0.46 : radius;
+        points.push([x + Math.cos(angle) * r, y + Math.sin(angle) * r]);
+      }
+      polygon(points, color);
+    }
+    function mystery(x, y, radius) {
+      // 统一绒毛娃娃占位轮廓，不提前透露动物类别；不是方形盲盒。
+      ellipse(x, y + radius * 1.35, radius * 1.03, radius * 0.28, '#536a8223');
+      ellipse(x, y + radius * 0.66, radius * 0.8, radius * 0.78, '#c4cadb', '#91a2b2', 1.4);
+      ellipse(x - radius * 0.71, y + radius * 0.51, radius * 0.27, radius * 0.4, '#dce0ed', '#91a2b2', 1);
+      ellipse(x + radius * 0.71, y + radius * 0.51, radius * 0.27, radius * 0.4, '#dce0ed', '#91a2b2', 1);
+      ellipse(x - radius * 0.42, y + radius * 1.16, radius * 0.34, radius * 0.22, '#dce0ed', '#91a2b2', 1);
+      ellipse(x + radius * 0.42, y + radius * 1.16, radius * 0.34, radius * 0.22, '#dce0ed', '#91a2b2', 1);
+      const fur = ctx.createRadialGradient(x - radius * 0.4, y - radius * 0.4, radius * 0.05, x, y, radius);
+      fur.addColorStop(0, '#ffffff'); fur.addColorStop(.25, '#e7e9f3'); fur.addColorStop(1, '#bfc6d9');
+      ellipse(x, y, radius, radius, fur, '#91a2b2', 1.6);
+      ellipse(x - radius * 0.34, y - radius * 0.42, radius * .24, radius * .1, '#ffffff99');
+      text('?', x, y + 1, radius * 1.34, '#69788f');
+      line([[x - radius * 0.27, y + radius * .85], [x + radius * .27, y + radius * .85]], '#f8f4df', 3);
+    }
+    function decoration(item, x, y, radius) {
+      const color = item.color;
+      const bowY = y + radius * 0.81;
+      polygon([[x, bowY], [x - radius * 0.38, bowY - radius * 0.17], [x - radius * 0.32, bowY + radius * 0.19]], color);
+      polygon([[x, bowY], [x + radius * 0.38, bowY - radius * 0.17], [x + radius * 0.32, bowY + radius * 0.19]], color);
+      ellipse(x, bowY, radius * 0.09, radius * 0.11, '#fff0cf', color);
+      if (item.type === 2) {
+        ellipse(x + radius * 0.74, y - radius * 0.71, radius * 0.24, radius * 0.24, '#e5c26f');
+        ellipse(x + radius * 0.84, y - radius * 0.79, radius * 0.21, radius * 0.21, '#fff9ed');
+      } else if (item.type === 3) {
+        rounded(x - radius * 0.46, y - radius * 1.11, radius * 0.92, radius * 0.3, 3, '#fffdf4', color, 1.5);
+        line([[x - radius * 0.4, y - radius * 0.87], [x + radius * 0.4, y - radius * 0.87]], color, 3);
+      } else if (item.type === 4) {
+        for (let i = 0; i < 4; i++) {
+          const a = i * Math.PI / 2;
+          ellipse(x + radius * 0.74 + Math.cos(a) * radius * 0.11, y - radius * 0.42 + Math.sin(a) * radius * 0.11, radius * 0.12, radius * 0.12, color);
+        }
+      } else if (item.type === 5) {
+        star(x - radius * 0.33, y - radius * 1.1, radius * 0.16, '#ddba6b');
+        star(x + radius * 0.12, y - radius * 1.22, radius * 0.2, '#ddba6b');
+      } else if (item.type === 1) {
+        ellipse(x, y + radius * 0.39, radius * 0.24, radius * 0.24, '#f3dc9c', '#b79550');
+        star(x, y + radius * 0.39, radius * 0.15, '#b79550');
+      } else star(x + radius * 0.74, y - radius * 0.56, radius * 0.25, '#ddba6b');
+    }
+    function drawCabinet() {
+      rounded(20, 203, 394, 483, 28, '#dbe2e7');
+      rounded(16, 198, 394, 482, 28, '#fffaf0', '#94a7b8', 2);
+      rounded(25, 207, 376, 48, 18, '#3c536a', '#d0b27c', 1.5);
+      text('MYSTERY COLLECTION', 215, 228, 16, '#fff5df');
+      text('六款问号隐藏装 · 抓到后揭晓', 215, 246, 10, '#d8e0e7');
+      rounded(31, 263, 368, 307, 16, '#f3f6f6', '#afbdc9', 1.5);
+      const glass = ctx.createLinearGradient(0, 270, 0, 558);
+      glass.addColorStop(0, '#fffefa'); glass.addColorStop(1, '#e5edf1');
+      rounded(37, 269, 356, 295, 13, glass);
+      polygon([[83, 283], [347, 283], [347, 419], [83, 419]], '#edf2f3', '#dce4e9');
+      polygon([[39, 306], [83, 283], [83, 419], [43, 561]], '#e0e8ed', '#c9d5dd');
+      polygon([[347, 283], [391, 306], [387, 561], [347, 419]], '#eef2f2', '#d3dde3');
+      polygon([[83, 419], [347, 419], [387, 561], [43, 561]], '#dae5eb', '#b8c9d4');
+      for (let i = 1; i < 5; i++) {
+        const a = project(i / 5, 0); const b = project(i / 5, 1);
+        line([[a.x, a.y], [b.x, b.y]], '#c5d5df', 1);
+      }
+      for (let i = 1; i < 4; i++) {
+        const a = project(0, i / 4); const b = project(1, i / 4);
+        line([[a.x, a.y], [b.x, b.y]], '#c5d5df', 1);
+      }
+      text('后方', 215, 406, 10, '#9aaab7');
+      line([[51, 274], [61, 547]], '#ffffffa0', 5);
+      line([[376, 314], [367, 521]], '#ffffff70', 3);
+      rounded(29, 573, 369, 94, 15, '#edf0ef', '#bbc7d0', 1);
+      rounded(272, 586, 112, 70, 12, '#d2dde5', '#a5b6c4', 1.5);
+      rounded(281, 595, 94, 49, 8, '#f5f7f6', '#b8c6d0');
+      text('出货口', 328, 650, 10, '#768b9e');
+      text(record.claimed ? '本次免费机会已使用' : 'FREE PLAY / 免费一次', 151, 601, 12, '#8b7148');
+      text('合法夹取必定成功', 151, 626, 12, '#6e8294');
+      for (let i = 0; i < 3; i++) ellipse(47 + i * 12, 651, 2.5, 2.5, '#adbac4');
+      line([[42, 675], [384, 675]], '#d0b27c', 2);
+    }
+    function drawAim() {
+      if (record.phase !== 'idle') return;
+      const p = project(record.claw.x, record.claw.y);
+      const target = targetIndex();
+      const color = target >= 0 ? '#b98b43' : '#7893a6';
+      ctx.save(); ctx.setLineDash([3, 4]);
+      ellipse(p.x, p.y, 19, 10, null, color, 1.5); ctx.restore();
+      line([[p.x - 26, p.y], [p.x + 26, p.y]], color, 1.5);
+      line([[p.x, p.y - 14], [p.x, p.y + 14]], color, 1.5);
+      line([[p.x, p.y - record.claw.z + 4], [p.x, p.y - 14]], '#8d9eae55', 1.2);
+      ellipse(p.x, p.y, 2.5, 2, color);
+      if (target >= 0) {
+        const d = record.dolls[target]; const q = project(d.x, d.y);
+        const pulse = 1 + Math.sin(record.clock / 180) * 0.04;
+        ellipse(q.x, q.y, 33 * pulse, 16 * pulse, '#f6d89428', '#c4984a', 2.5);
+        text('已对准，按抓取', q.x, q.y + 27, 11, '#997035');
+      }
+    }
+    function drawClaw() {
+      const claw = record.claw;
+      const p = project(claw.x, claw.y);
+      const tip = p.y - claw.z;
+      const hub = tip - 33;
+      const railY = 273 + claw.y * 23;
+      const spread = 12 + claw.open * 17;
+      ellipse(p.x, p.y + 3, 13 + claw.z * 0.095, 6 + claw.z * 0.03, '#496b8425');
+      line([[p.x - spread, p.y + 1], [p.x, p.y + 6], [p.x + spread, p.y + 1]], '#6f8a9c38', 3);
+      line([[60, railY], [370, railY]], '#acbac6', 7);
+      line([[60, railY - 2], [370, railY - 2]], '#e5ebee', 2);
+      rounded(p.x - 16, railY - 7, 32, 15, 5, '#d4b274', '#9e7d47');
+      line([[p.x, railY + 8], [p.x, hub - 9]], '#7e94a6', 3);
+      rounded(p.x - 12, hub - 10, 24, 20, 7, '#e5c78e', '#a98447', 1.5);
+      ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      line([[p.x - 7, hub + 5], [p.x - spread, hub + 21], [p.x - spread + 5, tip], [p.x - spread + 12, tip + 3]], '#607a91', 5);
+      line([[p.x + 7, hub + 5], [p.x + spread, hub + 21], [p.x + spread - 5, tip], [p.x + spread - 12, tip + 3]], '#607a91', 5);
+      line([[p.x, hub + 8], [p.x + 2, tip - 5], [p.x - 2, tip + 2]], '#97aab9', 3);
+      ctx.restore();
+    }
+    function drawResult() {
+      if (reveal.hidden || !record.reward) return;
+      ctx.fillStyle = '#fbfaf8ed'; ctx.fillRect(0, CANVAS_TOP, W, CANVAS_HEIGHT);
+      rounded(32, 250, 370, 426, 25, '#54708b14');
+      rounded(30, 246, 370, 426, 25, '#fffdf6', '#d2b37d', 2);
+      const progress = record.phase === 'revealing' ? ease(clamp(record.elapsed / DURATIONS.revealing, 0, 1)) : 1;
+      const size = 40 * (0.62 + progress * 0.38);
+      ellipse(215, 465, 65, 13, '#e6d6b647');
+      ellipse(215, 414, 87, 78, '#fbf0d8');
+      for (let i = 0; i < 7; i++) {
+        const angle = i * Math.PI * 2 / 7 + record.clock * 0.00008;
+        star(215 + Math.cos(angle) * (88 + progress * 12), 410 + Math.sin(angle) * 66, 3 + i % 3, i % 2 ? '#c5d3dd' : '#e0bf7d');
+      }
+      ctx.save();
+      drawDoll(ctx, 215, 409, size, record.reward.type, { tilt: 0, alpha: 1 });
+      ctx.restore();
+      decoration(record.reward, 215, 409, size);
+    }
+    function render() {
+      if (!visible || !record) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(pixelScale, 0, 0, canvas.height / CANVAS_HEIGHT, 0, -CANVAS_TOP * canvas.height / CANVAS_HEIGHT);
+      drawCabinet();
+      drawAim();
+      record.dolls.forEach(doll => {
+        if (doll.taken) return;
+        const p = project(doll.x, doll.y);
+        mystery(p.x, p.y - 25, 22);
+      });
+      if (record.phase === 'ascending' || record.phase === 'transporting') {
+        const p = project(record.claw.x, record.claw.y);
+        mystery(p.x, p.y - record.claw.z + 1, 21);
+      }
+      if (record.phase === 'dropping') mystery(project(EXIT.x, EXIT.y).x, record.dropY, 21);
+      drawClaw();
+      drawResult();
+    }
+    function frame(time) {
+      rafId = null;
+      if (!visible) return;
+      const dt = lastTime === null ? 0 : clamp(time - lastTime, 0, 50);
+      lastTime = time;
+      if (time - resizeTime > 750) { resizeCanvas(); resizeTime = time; }
+      advance(dt); updateHint(); render();
+      if (visible) rafId = window.requestAnimationFrame(frame);
+    }
+    function restoreReveal() {
+      reveal.hidden = !record.reward;
+      if (!record.reward) return;
+      find('.gb-reveal-name').textContent = record.reward.name;
+      find('.gb-joined').textContent = '已加入本次演示图鉴' + (record.reward.isNew ? ' · 新款点亮' : ' · 本款已点亮');
+      find('.gb-reveal-progress').textContent = (record.preview ? '独立预览图鉴' : '页面内存图鉴') + '进度 ' + pool().size + ' / 6';
+    }
+    function setBackgroundInert() {
+      oldInert = Array.from(phone.children).filter(node => node !== overlay).map(node => ({ node: node, inert: node.inert }));
+      oldInert.forEach(entry => { entry.node.inert = true; });
+    }
+    function attachEvents() {
+      document.addEventListener('keydown', keyDown, true);
+      document.addEventListener('keyup', keyUp, true);
+      window.addEventListener('blur', blur);
+      window.addEventListener('resize', resizeCanvas);
+      if (observer) observer.observe(phone);
+    }
+    function detachEvents() {
+      document.removeEventListener('keydown', keyDown, true);
+      document.removeEventListener('keyup', keyUp, true);
+      window.removeEventListener('blur', blur);
+      window.removeEventListener('resize', resizeCanvas);
+      if (observer) observer.disconnect();
+    }
+    function hide() {
+      if (!visible) return;
+      visible = false;
+      if (rafId !== null) window.cancelAnimationFrame(rafId);
+      rafId = null; lastTime = null;
+      resetInput(); spaceHeld = false;
+      detachEvents();
+      overlay.hidden = true;
+      oldInert.forEach(entry => { entry.node.inert = entry.inert; });
+      oldInert = [];
+      if (oldFocus && oldFocus.isConnected && typeof oldFocus.focus === 'function') oldFocus.focus({ preventScroll: true });
+      oldFocus = null;
+    }
+    function getState() {
+      return {
+        visible: visible, busy: !!(record && record.busy), claimed: !!(record && record.claimed),
+        preview: !!(record && record.preview), roundId: record ? record.roundId : null,
+        phase: record ? record.phase : 'hidden',
+        claw: record ? { x: record.claw.x, y: record.claw.y, z: record.claw.z } : { x: 0.5, y: 0.9, z: HOME_Z },
+        stick: { x: stick.x, y: stick.y }, target: targetIndex(),
+        // 揭晓前不把位置映射泄漏给 HUD 或测试接口；只有已揭晓的获奖款返回普通类型。
+        dolls: record ? record.dolls.map((doll, i) => ({ x: doll.x, y: doll.y, type: record.reward && record.chosen === i ? doll.type : -1, taken: doll.taken })) : [],
+        collection: collectionValues(pool()), reward: cloneReward(record && record.reward)
+      };
+    }
+    function finish() {
+      if (!visible || !record || record.busy || record.phase !== 'result' || doneDelivered) return;
+      doneDelivered = true;
+      const callback = onDone;
+      const result = {
+        roundId: record.roundId, preview: record.preview, claimed: record.claimed,
+        reward: cloneReward(record.reward), collection: collectionValues(pool())
+      };
+      hide();
+      if (typeof callback === 'function') callback(result);
+    }
+    function show(settings) {
+      settings = settings || {};
+      if (visible && record.busy) return false;
+      const preview = settings.preview === true;
+      const id = settings.roundId == null ? null : settings.roundId;
+      if (!preview && (id === null || (typeof id !== 'string' && typeof id !== 'number') || (typeof id === 'number' && !Number.isFinite(id)) || String(id).trim() === '')) {
+        throw new TypeError('GCBonus.show requires a nonempty roundId for real rewards');
+      }
+      if (visible) hide();
+      const key = id == null ? null : String(id);
+      record = !preview && claimedRoundIds.has(key) ? roundRecords.get(key) : makeRecord(id, preview);
+      onDone = typeof settings.onDone === 'function' ? settings.onDone : null;
+      doneDelivered = false; deniedUntil = 0;
+      oldFocus = document.activeElement;
+      setBackgroundInert();
+      visible = true; overlay.hidden = false;
+      find('.gb-subtitle').textContent = preview ? '奖励机预览 · 不计本关奖励' : '单关成功奖励 · 摇杆瞄准后抓取';
+      done.textContent = preview ? '返回主关卡' : '再玩一局（S0演示）';
+      find('.gb-result-note').textContent = preview ? '预览收藏独立保存，不计入通关奖励' : '收藏仅本页面有效 · 重玩保留，刷新清空';
+      resetInput(); spaceHeld = false;
+      restoreReveal(); updateAlbum(); updateControls(); updateHint();
+      resizeCanvas(); resizeTime = 0; lastTime = null;
+      attachEvents();
+      (record.phase === 'result' ? done : overlay).focus({ preventScroll: true });
+      render();
+      rafId = window.requestAnimationFrame(frame);
+      return true;
+    }
+
+    joystick.addEventListener('pointerdown', pointerDown);
+    joystick.addEventListener('pointermove', pointerMove);
+    joystick.addEventListener('pointerup', pointerUp);
+    joystick.addEventListener('pointercancel', pointerCancel);
+    joystick.addEventListener('lostpointercapture', event => {
+      if (event.pointerId === pointerId) releasePointer();
+    });
+    grab.addEventListener('click', () => claim(false));
+    quick.addEventListener('click', () => claim(true));
+    done.addEventListener('click', finish);
+    ['pointerdown', 'pointermove', 'pointerup', 'pointercancel', 'click', 'dblclick', 'wheel', 'contextmenu'].forEach(name => {
+      overlay.addEventListener(name, event => {
+        event.stopPropagation();
+        if (name === 'wheel' || name === 'contextmenu') event.preventDefault();
+      }, { passive: false });
+    });
+    singleton = Object.freeze({ show: show, hide: hide, getState: getState });
+    return singleton;
+  }
+
+  window.GCBonus = Object.freeze({ create: create });
+}());
+
+</script>
+<script>
+/* Golden Claw: Sort —— 2.5D 渲染与交互（依赖 engine.js 的 GCEngine） */
+(function () {
+  'use strict';
+  const E = window.GCEngine;
+  const W = 430, H = 932;
+  const REGION = [18, 152, 412, 692];
+  const FRAME = { x: 12, y: 146, w: 406, h: 552 };
+  const cam = E.makeCamera(REGION);
+  const CAM = E.CAM, CAP = E.CAP;
+  const SEED = 61;
+  const PAL = [['#f6b3c9', '#e88aaa'], ['#c08a5a', '#9a6a40'], ['#f4a25b', '#d9823a'], ['#f7d54e', '#e0b52a'], ['#86c97f', '#5fa957'], ['#9bb2d1', '#7690b4']];
+  const AUTO_RATE = 2;         // 自动抓取动画速度固定为首抓的 2 倍
+  const haloCache = {};         // 按类别缓存金色轮廓，避免每帧重复创建遮罩
+  let bonus, roundSeq = 0;
+  const BX = [12, 116, 220, 324], BY = 704, BW = 94, BH = 96;
+  const ITEMS = 2;             // [PLACEHOLDER] 本局晃动次数
+  const GOLD_COIN = 10;        // [PLACEHOLDER] 黄金玩偶额外金币
+  const WIN_COIN = 100;        // [PLACEHOLDER] 普通关通关金币
+  const YAW = { left: 90, front: 0, right: -90 };
+
+  // ---------------------------------------------------------------- 工具
+  const $ = id => document.getElementById(id);
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const ease = k => (k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  const now = () => performance.now();
+  function hex2rgb(h) { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function mix(a, b, t) { const x = hex2rgb(a), y = hex2rgb(b); return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(',')})`; }
+  const dimCache = {};
+  function dim(c) { return dimCache[c] || (dimCache[c] = mix(c, '#aab1bd', 0.55)); }
+
+  // ---------------------------------------------------------------- 声音（WebAudio 小合成器）
+  let actx = null, soundOn = true;
+  function sfx(kind, n) {
+    if (!soundOn) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = actx.currentTime;
+      const tone = (f, d, type, v, dt) => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = type || 'sine'; o.frequency.setValueAtTime(f, t + (dt || 0));
+        g.gain.setValueAtTime(v || .08, t + (dt || 0)); g.gain.exponentialRampToValueAtTime(.0001, t + (dt || 0) + d);
+        o.connect(g); g.connect(actx.destination); o.start(t + (dt || 0)); o.stop(t + (dt || 0) + d + .02);
+      };
+      if (kind === 'click') tone(880, .06, 'triangle', .05);
+      else if (kind === 'deny') tone(180, .14, 'square', .04);
+      else if (kind === 'grab') tone(320, .08, 'square', .035);
+      else if (kind === 'land') tone(440 * Math.pow(1.122, n || 0), .12, 'sine', .08);
+      else if (kind === 'full') { tone(660, .1, 'triangle', .07); tone(990, .16, 'triangle', .07, .08); }
+      else if (kind === 'view') tone(520, .18, 'sine', .04);
+      else if (kind === 'shake') { for (let i = 0; i < 6; i++) tone(120 + i * 15, .07, 'sawtooth', .03, i * .06); }
+      else if (kind === 'coin') { tone(1320, .06, 'square', .03); tone(1760, .1, 'square', .03, .05); }
+      else if (kind === 'win') [523, 659, 784, 1047].forEach((f, i) => tone(f, .2, 'triangle', .08, i * .1));
+      else if (kind === 'fail') [392, 330, 262].forEach((f, i) => tone(f, .22, 'sine', .07, i * .14));
+    } catch (e) { /* 无声环境忽略 */ }
+  }
+
+  // ---------------------------------------------------------------- 动画任务
+  const tasks = [];
+  function anim(dur, fn) {
+    return new Promise(res => {
+      if (dur <= 0) { fn(1); res(); return; }
+      tasks.push({ t0: now(), dur: dur * 1000, fn, res });
+    });
+  }
+  function stepTasks(t) {
+    for (let i = tasks.length - 1; i >= 0; i--) {
+      const a = tasks[i];
+      const k = (t - a.t0) / a.dur;
+      if (k >= 1) { tasks.splice(i, 1); a.fn(1); a.res(); } else a.fn(Math.max(0, k));
+    }
+  }
+  const wait = s => anim(s, () => {});
+
+  // ---------------------------------------------------------------- 游戏状态
+  let level, s, G;
+  function reset() {
+    level = E.createLevel(SEED);
+    s = E.newState(level);
+    G = {
+      yaw: 0, view: 'front', rotating: false,
+      busy: false, over: false, started: false, roundId: ++roundSeq, winPaid: false,
+      claw: { x: 0, y: -0.15, z: CAM.CLAW_Z, open: 1, carry: -1 },
+      flyers: [], pending: [],
+      vb: s.slots.map(() => ({ type: -1, count: 0, gone: false, anim: null })),
+      serving: -1, target: -1, flashes: [], shake: { x: 0, y: 0 }, tween: {}, tweenK: 0,
+      items: ITEMS, coins: 120, golds: 0, ops: 0, t0: 0, revived: false,
+      tips: {}, popups: [], speed: G ? G.speed : 1, hit: [],
+    };
+    updateHUD();
+  }
+
+  // ---------------------------------------------------------------- 绘制：玩偶
+  function drawDoll(c, x, y, r, type, o) {
+    o = o || {};
+    let [f, d] = PAL[type]; // 黄金只加金币标记，不改变原类别的颜色/轮廓
+    if (o.pressed) { f = dim(f); d = dim(d); }
+    c.save();
+    c.translate(x, y);
+    c.rotate((o.tilt || 0) * Math.PI / 180);
+    c.globalAlpha = o.alpha == null ? 1 : o.alpha;
+    const ell = (ex, ey, rx, ry, fill, stroke, lw) => {
+      c.beginPath(); c.ellipse(ex, ey, Math.max(rx, .1), Math.max(ry, .1), 0, 0, Math.PI * 2);
+      if (fill) { c.fillStyle = fill; c.fill(); }
+      if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw || 1.2; c.stroke(); }
+    };
+    if (o.glow) {
+      // 遮罩沿动物真实轮廓描边：耳朵/手脚一起发光，避免被身体覆盖的圆圈。
+      const mask = goldHalo(type), size = r / 32;
+      const pulse = .9 + .1 * Math.sin(now() / 310);
+      c.save(); c.globalAlpha *= pulse;
+      c.shadowColor = '#ffc62f'; c.shadowBlur = Math.max(7, r * .28);
+      c.drawImage(mask.outer, -80 * size, -85 * size, 160 * size, 190 * size);
+      c.shadowBlur = 0;
+      const thick = Math.max(2.6, r * .1);
+      for (let j = 0; j < 12; j++) {
+        const a = j * Math.PI / 6;
+        c.drawImage(mask.outer, -80 * size + Math.cos(a) * thick, -85 * size + Math.sin(a) * thick, 160 * size, 190 * size);
+      }
+      for (let j = 0; j < 8; j++) {
+        const a = j * Math.PI / 4, edge = Math.max(1.15, r * .06);
+        c.drawImage(mask.inner, -80 * size + Math.cos(a) * edge, -85 * size + Math.sin(a) * edge, 160 * size, 190 * size);
+      }
+      c.restore();
+    }
+    if (!o.mask) ell(3, r * 1.37, r * 1.05, r * .3, 'rgba(70,85,115,.22)');
+    ell(0, .6 * r, .89 * r, .87 * r, d, d);
+    ell(-.7 * r, .93 * r, .32 * r, .22 * r, f, d);
+    ell(.7 * r, .93 * r, .32 * r, .22 * r, f, d);
+    ell(-.78 * r, .28 * r, .27 * r, .42 * r, f, d);
+    ell(.78 * r, .28 * r, .27 * r, .42 * r, f, d);
+    ell(0, .62 * r, .45 * r, .48 * r, f);
+    // 耳朵（决定类别轮廓；黄金玩偶保留原类别轮廓）
+    {
+      if (type === 0) { ell(-.42 * r, -.92 * r, .23 * r, .66 * r, f, d); ell(.42 * r, -.92 * r, .23 * r, .66 * r, f, d); }
+      else if (type === 1) { ell(-.71 * r, -.72 * r, .33 * r, .33 * r, d); ell(.71 * r, -.72 * r, .33 * r, .33 * r, d); }
+      else if (type === 2) {
+        c.fillStyle = d;
+        c.beginPath(); c.moveTo(-.89 * r, -.25 * r); c.lineTo(-.8 * r, -1.12 * r); c.lineTo(-.12 * r, -.83 * r); c.closePath(); c.fill();
+        c.beginPath(); c.moveTo(.89 * r, -.25 * r); c.lineTo(.8 * r, -1.12 * r); c.lineTo(.12 * r, -.83 * r); c.closePath(); c.fill();
+      } else if (type === 5) { ell(-.95 * r, -.02 * r, .5 * r, .68 * r, d); ell(.95 * r, -.02 * r, .5 * r, .68 * r, d); }
+      else if (type === 4) { ell(-.48 * r, -.8 * r, .34 * r, .34 * r, f, d); ell(.48 * r, -.8 * r, .34 * r, .34 * r, f, d); }
+    }
+    const gr = c.createRadialGradient(-.36 * r, -.46 * r, r * .05, 0, 0, r * 1.05);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(.18, f); gr.addColorStop(.7, f); gr.addColorStop(1, d);
+    ell(0, 0, r, r, gr, d, 1.4);
+    ell(-.39 * r, -.46 * r, .3 * r, .11 * r, 'rgba(255,255,255,.35)');
+    // 脸
+    const eye = o.pressed ? '#5b6270' : '#28303b';
+    if (type === 4) {
+      ell(-.48 * r, -.8 * r, .2 * r, .2 * r, '#fff'); ell(.48 * r, -.8 * r, .2 * r, .2 * r, '#fff');
+      ell(-.48 * r, -.8 * r, .09 * r, .09 * r, eye); ell(.48 * r, -.8 * r, .09 * r, .09 * r, eye);
+    } else {
+      ell(-.33 * r, -.12 * r, .095 * r, .095 * r, eye); ell(.33 * r, -.12 * r, .095 * r, .095 * r, eye);
+    }
+    if (type === 3) ell(0, .33 * r, .33 * r, .17 * r, o.pressed ? dim('#e99028') : '#e99028');
+    else if (type === 5) {
+      c.strokeStyle = d; c.lineWidth = r * .16; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(0, .16 * r); c.quadraticCurveTo(-.1 * r, .65 * r, .24 * r, .72 * r); c.stroke();
+    } else {
+      c.strokeStyle = '#593e3f'; c.lineWidth = 1.2;
+      c.beginPath(); c.moveTo(-.12 * r, .3 * r); c.quadraticCurveTo(0, .43 * r, .12 * r, .3 * r); c.stroke();
+    }
+    c.restore();
+    // 标记保持竖直，放在头顶而非给动物整体染金；金币与可抓轮廓互不替代。
+    if (o.gold) coinBadge(c, x, y - r * (type === 0 ? 1.8 : type === 2 || type === 4 ? 1.36 : 1.25), Math.max(6, r * .36));
+    if (o.shakeTag) badge(c, x + r * .85, y - r * .85, r * .38, '#3b82f6', '≋');
+  }
+  function goldHalo(type) {
+    if (haloCache[type]) return haloCache[type];
+    const make = col => {
+      const mask = document.createElement('canvas'); mask.width = 160; mask.height = 190;
+      const mc = mask.getContext('2d');
+      drawDoll(mc, 80, 85, 32, type, { mask: true });
+      mc.globalCompositeOperation = 'source-in'; mc.fillStyle = col; mc.fillRect(0, 0, 160, 190);
+      return mask;
+    };
+    return (haloCache[type] = { outer: make('#edac08'), inner: make('#fff4bc') });
+  }
+  function coinBadge(c, x, y, r) {
+    c.save(); c.translate(x, y);
+    c.beginPath(); c.arc(0, 0, r + 1.3, 0, Math.PI * 2); c.fillStyle = '#fffdf6'; c.fill();
+    const gr = c.createLinearGradient(-r, -r, r, r);
+    gr.addColorStop(0, '#fff2aa'); gr.addColorStop(.5, '#ffd04d'); gr.addColorStop(1, '#d9940b');
+    c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.fillStyle = gr; c.fill();
+    c.strokeStyle = '#956408'; c.lineWidth = 1.3; c.stroke();
+    c.beginPath(); c.arc(0, 0, r * .72, 0, Math.PI * 2); c.strokeStyle = '#fff0ad'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = '#875409'; c.font = `700 ${Math.max(8, r * 1.25)}px "Microsoft YaHei",sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('金', 0, .4);
+    c.restore();
+  }
+  function star(c, x, y, r, col) {
+    c.beginPath();
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r;
+      c.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+    }
+    c.closePath(); c.fillStyle = col; c.fill();
+  }
+  function badge(c, x, y, r, col, txt) {
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fillStyle = col; c.fill();
+    c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.stroke();
+    c.fillStyle = '#fff'; c.font = `700 ${Math.round(r * 1.3)}px sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.fillText(txt, x, y + 1);
+  }
+
+  // ---------------------------------------------------------------- 绘制：机柜（与玩偶同一镜头）
+  function P(x, y, z) { return cam.project(x, y, z, G.yaw); }
+  function poly(c, pts, fill, stroke, lw) {
+    c.beginPath();
+    pts.forEach((q, i) => { const p = P(q[0], q[1], q[2]); i ? c.lineTo(p.sx, p.sy) : c.moveTo(p.sx, p.sy); });
+    c.closePath();
+    if (fill) { c.fillStyle = fill; c.fill(); }
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = lw || 1; c.stroke(); }
+  }
+  function line3(c, a, b, col, lw) {
+    const p = P(a[0], a[1], a[2]), q = P(b[0], b[1], b[2]);
+    c.beginPath(); c.moveTo(p.sx, p.sy); c.lineTo(q.sx, q.sy); c.strokeStyle = col; c.lineWidth = lw || 1; c.stroke();
+  }
+  const WALLS = [
+    { name: '背面', n: [0, 1], pts: [[-1, 1, 0], [1, 1, 0], [1, 1, 1], [-1, 1, 1]], c: [0, 1] },
+    { name: '正面', n: [0, -1], pts: [[1, -1, 0], [-1, -1, 0], [-1, -1, 1], [1, -1, 1]], c: [0, -1], front: true },
+    { name: '左侧', n: [-1, 0], pts: [[-1, -1, 0], [-1, 1, 0], [-1, 1, 1], [-1, -1, 1]], c: [-1, 0] },
+    { name: '右侧', n: [1, 0], pts: [[1, 1, 0], [1, -1, 0], [1, -1, 1], [1, 1, 1]], c: [1, 0] },
+  ];
+  function drawCabinet(c) {
+    const Ht = CAM.HTOP, a = G.yaw * Math.PI / 180, sa = Math.sin(a), ca = Math.cos(a);
+    const vis = WALLS.map(w => ({ w, nd: w.n[0] * sa + w.n[1] * ca })).filter(o => o.nd > -0.05).sort((p, q) => q.nd - p.nd);
+    for (const { w, nd } of vis) {
+      const pts = w.pts.map(q => [q[0], q[1], q[2] * Ht]);
+      const isBack = w.name === '背面';
+      const fill = w.front ? '#f8e9b5' : isBack ? '#cfe0f4' : '#dbe7f2';
+      poly(c, pts, fill, '#9fb3c8', 1.2);
+      if (isBack) {
+        for (const [u, zz] of [[-.6, .55], [-.25, .92], [.1, .5], [.45, .85], [.75, .45], [-.8, 1.1], [.2, 1.18]]) {
+          const p = P(u, 1, zz);
+          c.beginPath(); c.arc(p.sx, p.sy, 1.8, 0, Math.PI * 2); c.fillStyle = 'rgba(255,255,255,.95)'; c.fill();
+        }
+      }
+      if (nd > 0.3 || w.front) {
+        const m = P(w.c[0], w.c[1], Ht * .78);
+        c.font = '700 11px "Microsoft YaHei",sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+        c.fillStyle = w.front ? '#b45309' : '#64748b';
+        c.fillText(w.name, Math.min(Math.max(m.sx, 48), 382), Math.max(m.sy, 166));
+      }
+    }
+    poly(c, [[-1, -1, 0], [1, -1, 0], [1, 1, 0], [-1, 1, 0]], '#e6eef6', '#8ea8be', 1.6);
+    for (let k = 1; k < 8; k++) {
+      const t = -1 + k / 4;
+      line3(c, [t, -1, 0], [t, 1, 0], 'rgba(131,169,220,.35)', .8);
+      line3(c, [-1, t, 0], [1, t, 0], 'rgba(131,169,220,.35)', .8);
+    }
+  }
+
+  // ---------------------------------------------------------------- 绘制：机械爪
+  function drawClaw(c) {
+    const Ht = CAM.HTOP, cl = G.claw, a = G.yaw * Math.PI / 180;
+    // 顶部导轨：只画远侧两条（近侧的在镜头前方，不画）
+    if (-Math.sin(a) > -0.05) line3(c, [-1, -1, Ht], [-1, 1, Ht], '#7d93aa', 3);
+    if (Math.sin(a) > -0.05) line3(c, [1, -1, Ht], [1, 1, Ht], '#7d93aa', 3);
+    if (Math.abs(G.yaw) < 45) line3(c, [-1, cl.y, Ht], [1, cl.y, Ht], '#536779', 5);
+    else line3(c, [cl.x, -1, Ht], [cl.x, 1, Ht], '#536779', 5);
+    const top = P(cl.x, cl.y, Ht), hd = P(cl.x, cl.y, cl.z);
+    const sc = cam.K / hd.zc * .052;
+    c.fillStyle = '#334155'; roundRect(c, top.sx - 16, top.sy - 8, 32, 15, 4); c.fill();
+    c.strokeStyle = '#334155'; c.lineWidth = 2.5; c.beginPath(); c.moveTo(top.sx, top.sy + 6); c.lineTo(hd.sx, hd.sy); c.stroke();
+    if (cl.carry >= 0) {
+      const q = P(cl.x, cl.y, cl.z - CAM.RW * 2.0);
+      const r = cam.K * CAM.RW / q.zc;
+      const d = level.dolls[cl.carry];
+      drawDoll(c, q.sx, q.sy, r, d.type, { gold: d.gold, shakeTag: d.shake });
+    }
+    c.fillStyle = '#64748b'; roundRect(c, hd.sx - sc * 1.4, hd.sy - sc * .2, sc * 2.8, sc * 1.6, 4); c.fill();
+    const op = cl.open;
+    c.strokeStyle = '#334155'; c.lineWidth = Math.max(3, sc * .45); c.lineCap = 'round';
+    for (const sgn of [-1, 1]) {
+      c.beginPath();
+      c.moveTo(hd.sx + sgn * sc * .9, hd.sy + sc * 1.3);
+      c.quadraticCurveTo(hd.sx + sgn * sc * (1.2 + 1.3 * op), hd.sy + sc * 2.6, hd.sx + sgn * sc * (.2 + .9 * op), hd.sy + sc * 3.8);
+      c.stroke();
+    }
+  }
+  function roundRect(c, x, y, w, h, r) {
+    c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r);
+    c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath();
+  }
+
+  // ---------------------------------------------------------------- 绘制：篮子
+  function basketGeom(i) {
+    const vb = G.vb[i], k = vb.anim ? vb.anim.k : 0;
+    let dy = 0, alpha = 1;
+    if (vb.anim && vb.anim.kind === 'leave') { dy = 60 * ease(k); alpha = 1 - k; }
+    if (vb.anim && vb.anim.kind === 'enter') { dy = 50 * (1 - ease(k)); alpha = k; }
+    return { x: BX[i], y: BY + dy, alpha };
+  }
+  function drawBasketShape(c, x, y, fill, stroke, dash) {
+    c.beginPath();
+    c.moveTo(x, y); c.lineTo(x + BW, y); c.lineTo(x + BW - 7, y + BH); c.lineTo(x + 7, y + BH); c.closePath();
+    c.fillStyle = fill; c.fill();
+    c.setLineDash(dash ? [7, 5] : []); c.strokeStyle = stroke; c.lineWidth = 2.2; c.stroke(); c.setLineDash([]);
+    c.fillStyle = stroke; roundRect(c, x - 2, y - 6, BW + 4, 10, 5); c.fill();
+  }
+  function drawBaskets(c) {
+    for (let i = 0; i < 3; i++) {
+      const vb = G.vb[i], g = basketGeom(i);
+      c.save(); c.globalAlpha = g.alpha;
+      const x = g.x, y = g.y, cx = x + BW / 2;
+      if (vb.gone) {
+        c.setLineDash([5, 5]); c.strokeStyle = '#cbd5e1'; c.lineWidth = 1.5; roundRect(c, x + 4, y + 4, BW - 8, BH - 8, 10); c.stroke(); c.setLineDash([]);
+        c.fillStyle = '#94a3b8'; c.font = '12px "Microsoft YaHei"'; c.textAlign = 'center'; c.fillText('已用完', cx, y + BH / 2 + 4);
+      } else if (vb.type < 0) {
+        drawBasketShape(c, x, y, '#eff5ff', '#2563eb', true);
+        c.fillStyle = '#2563eb'; c.font = '700 28px "Microsoft YaHei"'; c.textAlign = 'center'; c.fillText('?', cx, y + 46);
+        c.font = '700 16px "IBM Plex Mono",Consolas,monospace'; c.fillText(`0 / ${CAP}`, cx, y + 80);
+        if (!G.busy && !G.over && E.firstEmptySlot(s) === i) {
+          c.fillStyle = '#2563eb'; roundRect(c, cx - 22, y - 24, 44, 17, 8); c.fill();
+          c.fillStyle = '#fff'; c.font = '700 10px "Microsoft YaHei"'; c.fillText('下一篮', cx, y - 12);
+        }
+      } else {
+        const serving = G.serving === i && G.busy;
+        const waiting = !serving && vb.count < CAP && !vb.anim;
+        drawBasketShape(c, x, y, serving ? '#fff3d6' : '#f6dfba', serving ? '#e59a12' : '#b7835a');
+        if (serving) { c.save(); c.shadowColor = '#f59e0b'; c.shadowBlur = 16; c.strokeStyle = '#f59e0b'; c.lineWidth = 3; roundRect(c, x - 3, y - 9, BW + 6, BH + 12, 10); c.stroke(); c.restore(); }
+        drawDoll(c, cx, y + 30, 15, vb.type, {});
+        for (let k = 0; k < CAP; k++) {
+          c.beginPath(); c.arc(cx - 21 + k * 14, y + 62, 4.5, 0, Math.PI * 2);
+          c.fillStyle = k < vb.count ? '#b7835a' : 'rgba(183,131,90,.25)'; c.fill();
+        }
+        c.fillStyle = '#5b3a1e'; c.font = '700 16px "IBM Plex Mono",Consolas,monospace'; c.textAlign = 'center';
+        c.fillText(`${vb.count} / ${CAP}`, cx, y + 87);
+        if (waiting && !G.busy) {
+          c.fillStyle = 'rgba(71,85,105,.88)'; roundRect(c, cx - 22, y - 24, 44, 17, 8); c.fill();
+          c.fillStyle = '#fff'; c.font = '700 10px "Microsoft YaHei"'; c.fillText('等待中', cx, y - 12);
+        }
+      }
+      c.restore();
+    }
+    // 第 4 篮位：锁定
+    const x = BX[3], y = BY, cx = x + BW / 2;
+    drawBasketShape(c, x, y, '#e5e7eb', '#9ca3af');
+    c.fillStyle = '#6b7280';
+    c.beginPath(); c.arc(cx, y + 34, 10, Math.PI, 0); c.lineWidth = 4; c.strokeStyle = '#6b7280'; c.stroke();
+    roundRect(c, cx - 14, y + 34, 28, 22, 4); c.fill();
+    c.fillStyle = '#6b7280'; c.font = '700 11px "Microsoft YaHei"'; c.textAlign = 'center'; c.fillText('额外篮位', cx, y + 76);
+    c.fillText('待定', cx, y + 90);
+    c.fillStyle = '#94a3b8'; c.font = '12px "Microsoft YaHei"';
+    c.fillText(`后备篮子 ${s.supply} 个 · 每篮 ${CAP} 只`, W / 2, BY + BH + 18);
+  }
+
+  // ---------------------------------------------------------------- 一帧
+  let ctx, canvas, scale = 1;
+  function render() {
+    const c = ctx;
+    c.clearRect(0, 0, W, H);
+    c.fillStyle = '#fbfaf8'; c.fillRect(0, 0, W, H);
+    c.save();
+    c.translate(G.shake.x, G.shake.y);
+    c.fillStyle = '#dce8f4'; c.strokeStyle = '#718398'; c.lineWidth = 2.2;
+    roundRect(c, FRAME.x, FRAME.y, FRAME.w, FRAME.h, 18); c.fill(); c.stroke();
+    c.save();
+    roundRect(c, FRAME.x + 3, FRAME.y + 3, FRAME.w - 6, FRAME.h - 6, 15); c.clip();
+    drawCabinet(c);
+    // 玩偶：按到镜头的真实深度由远及近
+    const list = [];
+    for (let p = 0; p < s.occ.length; p++) {
+      const id = s.occ[p];
+      if (id < 0) continue;
+      let q = level.geo.pos[p];
+      const tw = G.tween[id];
+      if (tw) {
+        const k = ease(G.tweenK), a = level.geo.pos[tw.from], b = level.geo.pos[tw.to];
+        q = { x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k), z: lerp(a.z, b.z, k) + Math.sin(Math.PI * G.tweenK) * 2.2 };
+      }
+      const d = level.dolls[id];
+      const g = E.dollScreen(cam, q, G.yaw, d.type === 5);
+      list.push({ p, id, d, g, tilt: level.geo.pos[p].tilt });
+    }
+    list.sort((a, b) => b.g.zc - a.g.zc);
+    G.hit = list;
+    const tnow = now();
+    for (const it of list) {
+      const free = E.grabbable(level, s, it.p);
+      drawDoll(c, it.g.x, it.g.y, it.g.r, it.d.type, {
+        tilt: it.tilt, pressed: !free, glow: free && !G.rotating && !G.tween[it.id],
+        gold: it.d.gold, shakeTag: it.d.shake,
+      });
+      if (it.p === G.target) {
+        c.save(); c.strokeStyle = '#f59e0b'; c.lineWidth = 3; c.setLineDash([6, 4]);
+        c.beginPath(); c.ellipse(it.g.x, it.g.y + it.g.r * .3, it.g.r * 1.45, it.g.r * 1.75, 0, 0, Math.PI * 2); c.stroke(); c.restore();
+      }
+    }
+    for (const fl of G.flashes) {
+      const k = (tnow - fl.t0) / 900;
+      if (k > 1) continue;
+      const it = list.find(o => o.p === fl.p);
+      if (!it) continue;
+      c.save(); c.globalAlpha = 1 - k * .6; c.strokeStyle = '#f97316'; c.lineWidth = 3.5;
+      c.beginPath(); c.arc(it.g.x, it.g.y, it.g.r * (1.2 + .25 * Math.sin(k * 18)), 0, Math.PI * 2); c.stroke(); c.restore();
+    }
+    G.flashes = G.flashes.filter(fl => tnow - fl.t0 < 900);
+    drawClaw(c);
+    c.fillStyle = 'rgba(255,255,255,.4)';
+    c.fillRect(FRAME.x + 18, FRAME.y + 40, 6, 170);
+    c.restore();
+    if (Math.abs(G.yaw) < 1) {
+      c.fillStyle = 'rgba(245,197,66,.9)'; roundRect(c, FRAME.x + 3, FRAME.y + FRAME.h - 9, FRAME.w - 6, 6, 3); c.fill();
+    }
+    c.restore();
+    drawBaskets(c);
+    for (const f of G.flyers) {
+      const d = level.dolls[f.id];
+      drawDoll(c, f.x, f.y, f.r, d.type, { gold: d.gold });
+    }
+    for (const pp of G.popups) {
+      const k = (tnow - pp.t0) / 900;
+      if (k > 1) continue;
+      c.globalAlpha = 1 - k; c.fillStyle = '#b7791f'; c.font = '700 18px "IBM Plex Mono",Consolas,monospace'; c.textAlign = 'center';
+      c.fillText(pp.text, pp.x, pp.y - k * 30); c.globalAlpha = 1;
+    }
+    G.popups = G.popups.filter(pp => tnow - pp.t0 < 900);
+  }
+
+  function frame(t) {
+    stepTasks(t);
+    for (const vb of G.vb) if (vb.anim) {
+      vb.anim.k = Math.min(1, (t - vb.anim.t0) / vb.anim.dur);
+      if (vb.anim.k >= 1) { const done = vb.anim.done; vb.anim = null; if (done) done(); }
+    }
+    render();
+    updateLive();
+    requestAnimationFrame(frame);
+  }
+
+  // ---------------------------------------------------------------- 抓取流程
+  function speedOf(k) { return G.speed * (k > 0 ? AUTO_RATE : 1); } // 首抓 1×；所有自动抓取 2×
+  async function clawTo(x, y, z, dur) {
+    const a = Object.assign({}, G.claw);
+    await anim(dur, k => { const e = ease(k); G.claw.x = lerp(a.x, x, e); G.claw.y = lerp(a.y, y, e); G.claw.z = lerp(a.z, z, e); });
+  }
+  async function grabOne(pos, slot, k) {
+    const sp = speedOf(k);
+    G.lastGrab = { kind: k > 0 ? 'auto' : 'first', rate: sp, pos, slot };
+    const q = level.geo.pos[pos], id = s.occ[pos];
+    const zT = CAM.CLAW_Z, zTop = q.z * CAM.LAYER_H + CAM.RW * 2.3;
+    G.serving = slot; G.target = pos;
+    await clawTo(q.x, q.y, zT, (.12 + Math.hypot(G.claw.x - q.x, G.claw.y - q.y) * .3) / sp);
+    await clawTo(q.x, q.y, zTop, .2 / sp);
+    await anim(.1 / sp, kk => { G.claw.open = 1 - kk; });
+    const ev = E.take(level, s, pos, slot);
+    if (G.vb[slot].type < 0) G.vb[slot].type = ev.type;
+    G.claw.carry = id; G.target = -1;
+    sfx('grab'); updateHUD();
+    await clawTo(q.x, q.y, zT, .18 / sp);
+    const dx = -.34 + slot * .34, dy = -.6;   // 投放口：靠近玻璃、对应篮位，保证在画面内
+    await clawTo(dx, dy, zT, (.1 + Math.hypot(q.x - dx, q.y - dy) * .28) / sp);
+    await anim(.06 / sp, kk => { G.claw.open = kk; });
+    const from = P(dx, dy, zT - CAM.RW * 2.0);
+    G.claw.carry = -1;
+    G.pending.push(fly(id, slot, ev, from, sp));
+  }
+  async function fly(id, slot, ev, from, sp) {
+    const f = { id, x: from.sx, y: from.sy, r: cam.K * CAM.RW / from.zc };
+    G.flyers.push(f);
+    const tx = BX[slot] + BW / 2, ty = BY + 44, r0 = f.r;
+    await anim(.36 / sp, k => { f.x = lerp(from.sx, tx, k); f.y = lerp(from.sy, ty, k) - Math.sin(Math.PI * k) * 40; f.r = lerp(r0, 13, k); });
+    G.flyers.splice(G.flyers.indexOf(f), 1);
+    const vb = G.vb[slot];
+    vb.count++;
+    sfx('land', vb.count);
+    const d = level.dolls[id];
+    if (d.gold) { G.coins += GOLD_COIN; G.golds++; G.popups.push({ text: `+${GOLD_COIN}`, x: tx, y: BY - 6, t0: now() }); sfx('coin'); updateHUD(); tipOnce('gold', '黄金玩偶：额外 +10 金币'); }
+    if (d.shake) tipOnce('shakeDoll', '抓到晃动玩偶：这轮抓完会免费晃一次娃娃机');
+    if (ev.full) {
+      sfx('full');
+      await new Promise(res => { vb.anim = { kind: 'leave', t0: now(), dur: 380 / sp, k: 0, done: res }; });
+      if (ev.refill) {
+        G.vb[slot] = { type: -1, count: 0, gone: false, anim: null };
+        await new Promise(res => { G.vb[slot].anim = { kind: 'enter', t0: now(), dur: 300 / sp, k: 0, done: res }; });
+      } else G.vb[slot] = { type: -1, count: 0, gone: true, anim: null };
+    }
+  }
+  async function flushFlyers() {
+    while (G.pending.length) { const p = G.pending.slice(); G.pending = []; await Promise.all(p); }
+  }
+  async function serviceLoop() {
+    let k = 1, a;
+    while ((a = E.nextAuto(level, s))) await grabOne(a.pos, a.slot, k++);
+    await flushFlyers();
+    G.serving = -1;
+    if (s.pendingShake) {
+      s.pendingShake = false;
+      if (E.remaining(s) > 0) {
+        toast('晃动玩偶生效：免费晃一次！', 1600);
+        if (await doShake()) await serviceLoop();
+      }
+    }
+  }
+  async function clawHome() { await clawTo(0, -.15, CAM.CLAW_Z, .35 / G.speed); }
+
+  async function doShake() {
+    sfx('shake');
+    await anim(.45, k => { G.shake.x = Math.sin(k * 42) * 7 * (1 - k); G.shake.y = Math.cos(k * 35) * 3 * (1 - k); });
+    G.shake = { x: 0, y: 0 };
+    let moves;
+    try { moves = E.reshuffle(level, s, E.mulberry32((now() * 1000) | 0)); }
+    catch (err) {
+      if (err.code !== 'RESHUFFLE_UNSOLVED') throw err;
+      toast('未找到已验证可解的新排列，保留原盘面，本次不消耗道具/复活', 2600);
+      return false;
+    }
+    G.tween = {};
+    for (const m of moves) if (m.from !== m.to) G.tween[m.id] = { from: m.from, to: m.to };
+    G.tweenK = 0;
+    await anim(.75, k => { G.tweenK = k; });
+    G.tween = {};
+    updateHUD();
+    return true;
+  }
+
+  // ---------------------------------------------------------------- 玩家输入
+  function pickAt(x, y) {
+    for (let i = G.hit.length - 1; i >= 0; i--) {
+      const it = G.hit[i], g = it.g;
+      const inHead = (x - g.x) ** 2 + (y - g.y) ** 2 < (g.r * 1.05) ** 2;
+      const inBody = ((x - g.x) / (g.r * .95)) ** 2 + ((y - g.y - .62 * g.r) / (g.r * .92)) ** 2 < 1;
+      if (inHead || inBody) return it.p;
+    }
+    return -1;
+  }
+  async function onTapMachine(x, y) {
+    G.lastTap = { x, y, started: G.started, over: G.over, rotating: G.rotating, busy: G.busy };
+    if (!G.started || G.over) return;
+    if (G.rotating) return;
+    if (G.busy) { toast('机械爪工作中，可以先转视角看看', 1100); return; }
+    const p = pickAt(x, y);
+    G.lastTap.p = p;
+    if (p < 0) { sfx('deny'); toast('点空了，点一只金色描边的玩偶', 1000); return; }
+    const chk = E.checkFirstGrab(level, s, p);
+    G.lastTap.chk = chk;
+    if (!chk.ok) {
+      sfx('deny');
+      if (chk.reason === 'pressed') {
+        for (const q of E.activeBlockers(level, s, p)) G.flashes.push({ p: q, t0: now() });
+        toast('被压住了，先抓压在上面的玩偶', 1300);
+      } else if (chk.reason === 'collecting') toast('该类正在收集', 1100);
+      else if (chk.reason === 'noslot') toast('篮位都在等待中，没有空篮可以开新类别', 1500);
+      return;
+    }
+    sfx('click');
+    G.busy = true; G.ops++;
+    const r = E.startFirstGrab(level, s, p);
+    await grabOne(p, r.slot, 0);
+    await serviceLoop();
+    await clawHome();
+    G.busy = false;
+    afterTurn();
+  }
+  function afterTurn() {
+    updateHUD();
+    if (E.isWin(s)) return showWin();
+    if (E.isFailed(level, s)) {
+      const round = G.roundId;
+      return setTimeout(() => { if (G.roundId === round && !G.busy && E.isFailed(level, s)) showFail(); }, 350);
+    }
+    // 引导提示
+    const waiting = s.slots.filter(b => b && b.type >= 0 && b.count < CAP).length;
+    if (waiting && !G.tips.wait) {
+      tipOnce('wait', '有篮子在等：先抓别的类别，把它要的玩偶露出来', 2400);
+    } else if (G.ops >= 2 && !G.tips.view) {
+      tipOnce('view', '看不清后面？点两侧按钮，转到娃娃机侧面看看', 2400);
+    }
+  }
+  async function useShake() {
+    if (!G.started || G.over || G.busy || G.rotating) { if (G.busy) toast('机械爪工作中，等这一轮结束再用', 1100); return; }
+    if (G.items <= 0) { sfx('deny'); toast('晃动已用完（购买与广告未接入原型）', 1400); return; }
+    G.items--; G.busy = true; updateHUD();
+    const changed = await doShake();
+    if (changed) await serviceLoop();
+    else { G.items++; updateHUD(); }
+    await clawHome();
+    G.busy = false;
+    afterTurn();
+  }
+  function setView(v) {
+    if (G.rotating || G.view === v || G.over) return;
+    const from = G.yaw, to = YAW[v];
+    G.view = v; G.rotating = true; G.tips.view = true;
+    sfx('view'); updateViewUI();
+    anim(.5, k => { G.yaw = lerp(from, to, ease(k)); }).then(() => { G.rotating = false; updateViewUI(); });   // [PLACEHOLDER] 转动 0.5 秒
+  }
+  function onViewBtn(side) {
+    if (side === 'L') setView(G.view === 'right' ? 'front' : 'left');
+    else setView(G.view === 'left' ? 'front' : 'right');
+  }
+
+  // ---------------------------------------------------------------- DOM：HUD、提示、弹窗
+  let toastTimer = 0;
+  function toast(msg, ms) {
+    const el = $('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), ms || 1400);
+  }
+  function tipOnce(key, msg, ms) { if (G.tips[key]) return; G.tips[key] = true; toast(msg, ms || 2000); }
+  function updateHUD() {
+    $('coins').textContent = G.coins;
+    $('rest').textContent = `剩余 ${E.remaining(s)} 只`;
+    $('itemCount').textContent = G.items;
+    $('itemBtn').classList.toggle('off', G.items <= 0);
+  }
+  function updateViewUI() {
+    for (const v of ['left', 'front', 'right']) $('vi-' + v).classList.toggle('on', G.view === v);
+    $('vbL').classList.toggle('off', G.view === 'left');
+    $('vbR').classList.toggle('off', G.view === 'right');
+    $('vbLcap').textContent = G.view === 'right' ? '回正面' : '左侧';
+    $('vbRcap').textContent = G.view === 'left' ? '回正面' : '右侧';
+  }
+  function fmtTime(ms) { const t = Math.floor(ms / 1000); return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; }
+  function updateLive() {
+    const el = $('live');
+    if (!el || !G.started) return;
+    el.textContent = `用时 ${fmtTime(G.over ? G.tEnd - G.t0 : now() - G.t0)} · 首抓点击 ${G.ops} 次 · 剩余 ${E.remaining(s)} 只 · 视角 ${({ left: '左侧', front: '正面', right: '右侧' })[G.view]}`;
+  }
+  function modal(html) { $('modalBox').innerHTML = html; $('modal').classList.add('show'); }
+  function closeModal() { $('modal').classList.remove('show'); }
+  function showWin() {
+    G.over = true; G.tEnd = now(); sfx('win');
+    if (!G.winPaid) { G.coins += WIN_COIN; G.winPaid = true; updateHUD(); }
+    modal(`<div class="m-icon ok">✓</div><div class="m-kicker">S0 · 清盘完成</div><div class="m-title">通关成功</div>
+      <div class="m-sub">${level.dolls.length} 只玩偶全部抓完 · ${level.totalBaskets} 个篮子全部装满</div>
+      <div class="m-stats"><div><b>${fmtTime(G.tEnd - G.t0)}</b><span>用时</span></div><div><b>${G.ops}</b><span>首抓点击</span></div><div><b>${G.revived ? '是' : '否'}</b><span>用过复活</span></div></div>
+      <div class="m-reward"><span>本关金币 · 已到账</span><b>+${WIN_COIN + G.golds * GOLD_COIN}</b><small>通关 ${WIN_COIN} ＋ 黄金玩偶 ${G.golds}×${GOLD_COIN}（数值待验证）</small></div>
+      <div class="m-note">另获 1 次免费奖励夹取：摇杆瞄准，抓取隐藏款入图鉴</div>
+      <button class="btn primary" id="mBonus">去奖励娃娃机</button>`);
+    $('mBonus').onclick = () => {
+      closeModal();
+      bonus.show({ roundId: `win-${G.roundId}`, preview: false, onDone: restart });
+    };
+  }
+  function failReason() {
+    const unfinished = s.slots.filter(b => b && b.type >= 0 && b.count < CAP);
+    const names = unfinished.map(b => E.TYPE_CN[b.type]).join('、');
+    if (E.firstEmptySlot(s) < 0) return `${unfinished.length} 个篮子（${names}）都在等被压住的玩偶，没有空篮可以开新类别`;
+    return `没有可以开新篮的可抓玩偶`;
+  }
+  function showFail() {
+    G.over = true; G.tEnd = now(); sfx('fail');
+    modal(`<div class="m-icon bad">!</div><div class="m-kicker">S0 · 未完成</div><div class="m-title failed">FAILED</div>
+      <div class="m-sub">剩余玩偶 ${E.remaining(s)} 只 · 当前无法继续</div>
+      <div class="m-reason">${failReason()}</div>
+      ${G.revived ? '<div class="m-note">本局复活次数已用完</div>' : '<button class="btn primary" id="mRevive">复活：重新打乱，继续本局</button><div class="m-note">演示版跳过 150 金币／看广告，每局 1 次；篮子进度保留，保证仍有解</div>'}
+      <button class="btn" id="mRestart">重新开始</button>`);
+    if ($('mRevive')) $('mRevive').onclick = revive;
+    $('mRestart').onclick = () => restart();
+  }
+  async function revive() {
+    closeModal();
+    G.over = false; G.busy = true;
+    toast('复活：重新打乱娃娃堆', 1400);
+    const changed = await doShake();
+    if (!changed) { G.busy = false; showFail(); return; }
+    G.revived = true;
+    await serviceLoop();
+    await clawHome();
+    G.busy = false;
+    afterTurn();
+  }
+  function restart() {
+    // 页面内重开，保留本次演示图鉴；刷新页面才清空收藏。
+    if (G.busy || G.rotating || (bonus && bonus.getState().busy)) { toast('等这一轮机械爪结束再重新开始', 1100); return; }
+    if (bonus) bonus.hide();
+    closeModal(); reset(); updateViewUI(); start();
+  }
+  function previewBonus() {
+    if (G.busy || G.rotating || (G.over && !E.isWin(s))) return;
+    bonus.show({ roundId: `preview-${++roundSeq}`, preview: true, onDone: () => {} });
+  }
+  function start() {
+    $('intro').classList.remove('show');
+    G.started = true; G.t0 = now();
+    toast('点一只金色描边的玩偶，机械爪会自动去抓', 2400);
+  }
+
+  // ---------------------------------------------------------------- 布局与启动
+  function layout() {
+    const panel = window.innerWidth >= 900;
+    document.body.classList.toggle('wide', panel);
+    const availW = panel ? window.innerWidth - 360 : window.innerWidth;
+    scale = Math.min((window.innerHeight - 24) / H, (availW - 24) / W, 1.4);
+    const ph = $('phone');
+    ph.style.transform = `scale(${scale})`;
+    $('stage').style.width = (W * scale) + 'px';
+    $('stage').style.height = (H * scale) + 'px';
+    const R = (window.devicePixelRatio || 1) * scale;
+    canvas.width = Math.round(W * R); canvas.height = Math.round(H * R);
+    ctx.setTransform(R, 0, 0, R, 0, 0);
+  }
+  function toPhone(ev) {
+    const rc = $('phone').getBoundingClientRect();
+    return { x: (ev.clientX - rc.left) * W / rc.width, y: (ev.clientY - rc.top) * H / rc.height };
+  }
+  function init() {
+    canvas = $('cv'); ctx = canvas.getContext('2d');
+    reset();
+    bonus = window.GCBonus.create({ drawDoll, sfx });
+    layout();
+    window.addEventListener('resize', layout);
+    canvas.addEventListener('pointerdown', ev => {
+      const { x, y } = toPhone(ev);
+      if (x > FRAME.x && x < FRAME.x + FRAME.w && y > FRAME.y && y < FRAME.y + FRAME.h) onTapMachine(x, y);
+      else if (x > BX[3] && x < BX[3] + BW && y > BY && y < BY + BH) toast('第 4 篮位为后续道具（L11 起，待定），原型不开放', 1500);
+    });
+    $('vbL').onclick = () => onViewBtn('L');
+    $('vbR').onclick = () => onViewBtn('R');
+    $('itemBtn').onclick = useShake;
+    $('gear').onclick = () => { soundOn = !soundOn; $('gear').classList.toggle('mute', !soundOn); toast(soundOn ? '音效：开' : '音效：关', 900); };
+    $('startBtn').onclick = start;
+    $('bonusPreview').onclick = previewBonus;
+    $('bonusPreviewSide').onclick = previewBonus;
+    $('spd').onclick = () => { G.speed = G.speed === 1 ? 2 : 1; $('spd').textContent = `机械爪速度 ${G.speed}×`; };
+    $('rst').onclick = () => restart();
+    updateViewUI();
+    let auto = false;
+    try { auto = sessionStorage.getItem('gc_autostart') === '1'; sessionStorage.removeItem('gc_autostart'); } catch (e) { /* ignore */ }
+    if (auto || /[?&]autostart/.test(location.search)) start(); else $('intro').classList.add('show');
+    requestAnimationFrame(frame);
+    window.__gc = { E, get level() { return level; }, get s() { return s; }, get G() { return G; }, get tasks() { return tasks.length; }, cam, pickAt, drawDoll, speedOf, get bonus() { return bonus; }, FRAME, BX, BY, BW, BH };
+  }
+  window.addEventListener('DOMContentLoaded', init);
+})();
+
+</script>
+</body>
+</html>
